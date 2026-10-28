@@ -5,7 +5,7 @@
 <h1 align="center">NotchMaster</h1>
 
 <p align="center">
-  An expandable plugin hub for your MacBook's notch.
+  An expandable notch app with plugin support for your Apple Silicon Mac.
 </p>
 
 <p align="center">
@@ -42,6 +42,7 @@ I'm building NotchMaster to bring Dynamic Island-style interactions to the Mac. 
 - Native settings for launch at login, expansion speed, and plugin controls.
 - Optional Metal border effects with accessibility fallbacks.
 - Local preferences, with optional iCloud sync through Pro.
+- Fake notch implementation for Apple Silicon Macs without a physical notch.
 
 ## Free & Pro
 
@@ -79,6 +80,8 @@ The [settings spec](docs/SETTINGS.md) covers the layout and behaviour in detail.
 ## Development
 
 The planned stack is Swift 6, SwiftUI, and AppKit. An Xcode project or Swift package will be added when app work starts. The minimum macOS version and toolchain are still undecided.
+
+Intel Macs are **not** supported due to losing support in recent macOS updates, and app development is designed only for Apple's M series SoC processors. The app will **not** build *or* run on any x86 Mac. **This will not change.**
 
 ```sh
 git clone https://github.com/louisboii747/NotchMaster.git
