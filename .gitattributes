@@ -1,0 +1,17 @@
+# Keep documentation and future Swift sources consistent across platforms.
+* text=auto
+*.md text eol=lf
+*.swift text eol=lf
+*.xcconfig text eol=lf
+*.plist text eol=lf
+*.entitlements text eol=lf
+*.svg text eol=lf
+.gitignore text eol=lf
+.gitattributes text eol=lf
+LICENSE text eol=lf
+
+# Brand assets must remain byte-for-byte intact.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.pdf binary
