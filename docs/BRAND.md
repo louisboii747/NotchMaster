@@ -1,37 +1,52 @@
 # Brand assets
 
-NotchMaster is a working title. The visual direction combines a charcoal surface, a recognisable notch silhouette, and a restrained cyan-to-periwinkle accent.
+The current identity uses a notched N, orange, warm white, and dark text. The README keeps the line “Your Mac's notch, now useful.” NotchMaster is still a working title.
 
-| Asset | Role |
+| Asset | Use |
 | :--- | :--- |
-| [`assets/logo.png`](assets/logo.png) | Original transparent-background raster mark for repository branding. |
-| [`assets/hero.svg`](assets/hero.svg) | Scalable product-concept banner; not a screenshot. |
-| [`assets/app-store-soon.svg`](assets/app-store-soon.svg) | Nonfunctional release-intent badge, explicitly labelled Planned. |
-| [`assets/support.svg`](assets/support.svg) | Open-source support banner without a payment destination. |
+| [`assets/logo.png`](assets/logo.png) | Notched N on an orange square, with transparency around the mark. |
+| [`assets/hero.png`](assets/hero.png) | README banner with the project name, tagline, and a notch-panel illustration. |
+| [`assets/app-store-soon.svg`](assets/app-store-soon.svg) | Project badge for the planned App Store release. |
+| [`assets/support.svg`](assets/support.svg) | Contribution and donation-status banner. |
 
-The logo uses three module openings to suggest a plugin hub. Keep the mark square and preserve its proportions. It is a README asset, not a validated macOS app icon set; create and verify the required asset catalog during implementation.
+The panel in the banner is concept artwork. Playback, timer, and activity icons show possible plugin uses, not working integrations.
 
-## Palette
+Keep the logo square and preserve its clearspace. It will need a proper asset catalog and size checks before use as the app icon.
+
+## Colours
+
+These are the reference colours for the artwork and SVGs.
 
 | Use | Colour |
 | :--- | :--- |
-| Canvas | `#090D16` |
-| Surface | `#111827` |
-| Primary text on dark | `#F5F7FF` |
-| Secondary text on dark | `#B6C1D6` |
-| Cyan accent | `#64E7F3` |
-| Periwinkle accent | `#9387FF` |
+| Orange | `#EE5836` |
+| Warm white | `#F7F4ED` |
+| Dark text | `#20201D` |
+| Secondary text | `#5B5A53` |
+| Rules and borders | `#D8D3CA` |
 
-README banners use their own dark canvas for consistent rendering in light and dark GitHub themes. These colours are branding choices, not instructions to replace native system colours in Settings.
+Settings should continue to use native system colours. The README artwork doesn't set the app's colour scheme.
 
-## Badge use
+## Badges
 
-The release-intent graphic is an original text-and-symbol badge. It does not use Apple's logo or claim Apple approval. Replace it with Apple's official, unmodified marketing artwork and an actual product URL only when a real listing exists and the applicable usage requirements are met.
+The App Store badge has no product link because there is no listing yet. Replace it with Apple's official artwork when a listing exists and the usage requirements are met.
 
-The donation badge remains deliberately unlinked. Add a verified destination only when the maintainer chooses a payment provider.
+The donation badge is unlinked. Add a destination when a payment provider has been chosen.
 
-## Logo provenance
+## Artwork source
 
-The raster logo was generated with the built-in image-generation tool for this repository. The final prompt was:
+The logo and main banner were generated with the built-in image-generation tool. The supporting SVGs were edited directly. The generation prompts are recorded below.
 
-> Use case: logo-brand. Create one final clean modern macOS utility app logo for NotchMaster, a MacBook notch that expands into a plugin hub. Deliver a single square high resolution app icon isolated on a genuinely transparent background outside the icon. Icon: charcoal black macOS rounded-square tile, subtle satin glass finish and carefully controlled cyan-to-periwinkle edge light. Central symbol is a striking, extremely simple geometric screen-top notch silhouette expanding downward into a compact rounded capsule/hub; a negative-space notch cutout from the top of a luminous cyan/periwinkle rounded hub shape, plus three tiny rounded module slots along the bottom to suggest plugins. The notch geometry must be immediately readable at 32px. Refined Apple-like restraint, crisp edges, optical balance, sophisticated minimalism, gentle depth, no busy decoration, no extra symbols, no glow spilling beyond tile, no text, no letters, no Apple logo, no watermarks, no mockup, one icon only. Keep the actual icon large with a small transparent margin. This is a repository brand asset, not a screenshot.
+<details>
+<summary>Logo prompt</summary>
+
+Use case: logo-brand. Create a completely new minimalist logo for NotchMaster, an independent Mac utility that expands the MacBook notch. A professional 2D identity, restrained Swiss graphic design. Single centred icon only, no wordmark. A flat vermilion-orange rounded square (#EE5836), gently rounded corners rather than a shiny squircle. Inside it a warm-white (#F7F4ED) custom block N monogram. The N is drawn from two equal vertical stems connected by one bold diagonal, with a small precise rectangular notch cut out of the upper edge of the right stem, making it subtly resemble a MacBook display notch. Strong optical balance, compact, legible at 32 pixels, simple manufactured geometry, generous consistent clearspace. Flat solid colours, razor-sharp clean contours. Deliver a large square raster asset with truly transparent canvas outside the orange rounded square. The complete identity must use only orange, warm-white and transparency. No shadows, no gradients, no glow, no 3D, no bevels, no glass, no grain, no paper texture, no sparkles, no generic AI brain symbols, no plugin dots, no extra outlines, no Apple logo, no other text. The visual should look like a carefully drawn independent software logo.
+
+</details>
+
+<details>
+<summary>Banner prompt</summary>
+
+Use case: logo-brand / ads-marketing. Create a finished wide GitHub README banner for NotchMaster, a planned open-source macOS notch utility. Landscape approximately 3:1, high resolution, no outer transparent margin. The supplied image is a STYLE REFERENCE for the flat orange colour and notched geometry only; do not paste the app icon into the banner. Art direction: restrained Swiss editorial software identity, warm off-white #F7F4ED canvas, deep ink #20201D typography, one flat vermilion #EE5836 accent. Meticulously aligned grid, generous margins, large readable modern grotesk typography with conventional letterforms. Left 58%: small plain text 'NotchMaster' at upper left, below it a large left-aligned two-line headline rendered EXACTLY 'Your Mac\'s notch,' then 'now useful.' Bottom left small plain text EXACTLY 'A macOS utility. In development.' Right 42%: one striking flat graphic abstraction of a MacBook's black screen-top notch opening into a larger black rectangular panel with modest corner radius. Behind this panel is one offset orange flat rectangle. Inside the black panel are just three simple evenly spaced warm-white line glyphs: a play triangle, a timer circle with two hands, and a compact bar chart. All lines crisp and consistent. The right-hand graphic must have plenty of empty space around it. It is a logo-like concept illustration, not a screenshot or a photoreal laptop. No other copy. Perfect legibility, precise spelling and punctuation. Absolutely flat solid colours, no gradients, no glows, no bevel, no glass, no shadows, no paper texture, no noise, no 3D, no sparkles, no sci-fi elements, no rounded pill badges, no Apple's logo, no decorative marketing slogans. This should resemble a carefully typeset independent Mac developer's project page.
+
+</details>

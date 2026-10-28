@@ -23,7 +23,7 @@ NotchMaster/
     ├── BRAND.md
     └── assets/
         ├── logo.png
-        ├── hero.svg
+        ├── hero.png
         ├── app-store-soon.svg
         └── support.svg
 ```
