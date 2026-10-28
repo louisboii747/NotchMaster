@@ -5,8 +5,8 @@
 <h1 align="center">NotchMaster</h1>
 
 <p align="center">
-  <strong>Your notch. More possibilities.</strong><br>
-  An expandable, plugin-driven hub for your MacBook.
+  <strong>Your Mac's Notch, now useful.</strong><br>
+  An expandable, plugin-compatible hub for your MacBook's notch.
 </p>
 
 <p align="center">
