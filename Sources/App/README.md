@@ -1,9 +1,9 @@
 # App
 
-Reserved for the macOS application entry point and composition root.
+Contains the macOS application entry point and composition root.
 
-During implementation, this layer will own app startup and shutdown, scene construction, the Settings scene, and the creation and lifetime of Core services. It will connect those services to UI views through explicit dependencies.
+`NotchMasterApp.swift` declares the single foundation window and native Settings scene. It retains `AppDependencies.swift`, which creates the shared local preferences store and injects it into Settings. Startup does not depend on future services.
 
 Keep feature logic in Core and presentation in UI. AppKit window management belongs to Core; App owns the coordinator's lifetime.
 
-No application target or Swift source exists yet. See the [architecture](../../docs/ARCHITECTURE.md) and [file map](../../docs/STRUCTURE.md).
+The root Xcode project compiles App, Core, and UI as source groups in one application module. See the [architecture](../../docs/ARCHITECTURE.md) and [file map](../../docs/STRUCTURE.md).

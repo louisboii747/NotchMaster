@@ -1,6 +1,6 @@
 # UI
 
-Reserved for SwiftUI presentation and reusable visual components.
+Contains SwiftUI presentation. Phase 1 implements `AppShellView.swift`, a clearly labelled foundation window, and `Settings/SettingsView.swift` with `GeneralSettingsView.swift`, a native grouped form containing only the functional expansion speed control. Views receive the Core preferences store explicitly.
 
 Planned responsibilities:
 
@@ -11,4 +11,4 @@ Planned responsibilities:
 
 Use native controls, semantic typography, and platform spacing. Views render state and send intents to Core; views do not register login items, load code, verify purchases, or perform CloudKit operations directly.
 
-No views or mock app implementation exist yet. See the [settings specification](../../docs/SETTINGS.md).
+The sidebar, other categories, and notch views are future work. See the [settings specification](../../docs/SETTINGS.md).

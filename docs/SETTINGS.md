@@ -1,6 +1,6 @@
 # Native settings specification
 
-Status: implementation requirements for the next phase. No Swift UI is implemented in this repository yet.
+Status: the Phase 1 native Settings scene implements only General's expansion speed slider and local persistence. The sidebar and other controls below remain future requirements.
 
 ## Window structure
 

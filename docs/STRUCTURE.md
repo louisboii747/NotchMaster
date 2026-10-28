@@ -1,6 +1,6 @@
 # Repository file map
 
-This is the complete tracked file layout for the initialization phase. There are no Swift source files, dependency manifests, generated projects, or build targets.
+This is the Phase 1 file layout. The native Xcode project has one macOS application target and one focused Swift Testing target. There are no third-party dependencies or packages.
 
 ```text
 NotchMaster/
@@ -8,13 +8,33 @@ NotchMaster/
 ├── .gitignore
 ├── README.md
 ├── LICENSE
+├── Config/
+│   └── Shared.xcconfig
+├── NotchMaster.xcodeproj/
+│   ├── project.pbxproj
+│   └── xcshareddata/xcschemes/NotchMaster.xcscheme
+├── Resources/
+│   └── Assets.xcassets/
+│       ├── Contents.json
+│       └── AppIcon.appiconset/
+│           ├── Contents.json
+│           └── icon-*.png
 ├── Sources/
 │   ├── App/
-│   │   └── README.md
+│   │   ├── README.md
+│   │   ├── NotchMasterApp.swift
+│   │   └── AppDependencies.swift
 │   ├── Core/
-│   │   └── README.md
+│   │   ├── README.md
+│   │   └── Settings/PreferencesStore.swift
 │   └── UI/
-│       └── README.md
+│       ├── README.md
+│       ├── AppShellView.swift
+│       └── Settings/
+│           ├── SettingsView.swift
+│           └── GeneralSettingsView.swift
+├── Tests/
+│   └── Core/PreferencesStoreTests.swift
 └── docs/
     ├── STRUCTURE.md
     ├── ARCHITECTURE.md
@@ -37,16 +57,17 @@ NotchMaster/
 | `Sources/UI/` | Settings, notch presentation, reusable materials | Core contracts and SwiftUI; AppKit bridging only when presentation requires it |
 | `docs/` | Product intent, architecture, implementation requirements | Repository-relative documentation and assets |
 
-These are source groups for a future macOS target. Separate modules or packages should be introduced only when the dependency and testing needs justify them.
+These are source groups in the macOS target. Separate modules or packages should be introduced only when the dependency and testing needs justify them. `Config/Shared.xcconfig` supplies the arm64-only architecture, macOS baseline, Swift 6 concurrency settings, development version, and local signing defaults. The shared scheme runs the preferences tests. App icons are resized copies of the existing logo; documentation artwork is preserved.
 
 ## Proposed implementation file boundaries
 
-The following names are a plan. **None of these files is created by this initialization.**
+The following names describe the wider plan. Only the six Phase 1 Swift files shown in the tree above are implemented. Do not create the remaining files until they have a working responsibility.
 
-| Future path | Responsibility |
+| Path | Responsibility |
 | :--- | :--- |
 | `Sources/App/NotchMasterApp.swift` | App entry point and Settings scene. |
 | `Sources/App/AppDependencies.swift` | Compose and retain services. |
+| `Sources/UI/AppShellView.swift` | Foundation verification window. |
 | `Sources/Core/Plugins/PluginRegistry.swift` | Plugin identities, lifecycle, and enabled state. |
 | `Sources/Core/Windowing/NotchWindowController.swift` | AppKit panel ownership and presentation. |
 | `Sources/Core/Windowing/DisplayGeometry.swift` | Display selection and notch-safe geometry. |
@@ -66,4 +87,4 @@ The following names are a plan. **None of these files is created by this initial
 | `Sources/UI/Notch/NotchView.swift` | Compact and expanded surface rendering. |
 | `Sources/UI/Materials/NotchMaterial.swift` | Accessible surface and effect composition. |
 
-When app work starts, add the actual Xcode project or package definition, test targets, asset catalog, and shared build settings in the same reviewed change. Do not add empty Swift files to imply that these components already exist.
+The Xcode project, minimal test target, asset catalog, and shared build settings are included in Phase 1. Do not add empty Swift files to imply that future components already exist.

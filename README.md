@@ -9,9 +9,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/status-planning-EE5836?style=flat-square" alt="Planning stage">
+  <img src="https://img.shields.io/badge/status-foundation-EE5836?style=flat-square" alt="Foundation build">
   <img src="https://img.shields.io/badge/platform-macOS-20201D?style=flat-square&amp;logo=apple&amp;logoColor=white" alt="For macOS">
-  <img src="https://img.shields.io/badge/Swift-6-20201D?style=flat-square&amp;logo=swift&amp;logoColor=white" alt="Planned language: Swift 6">
+  <img src="https://img.shields.io/badge/Swift-6-20201D?style=flat-square&amp;logo=swift&amp;logoColor=white" alt="Language: Swift 6">
   <img src="https://img.shields.io/badge/UI-SwiftUI%20%2B%20AppKit-20201D?style=flat-square" alt="Planned interface: SwiftUI and AppKit">
   <a href="LICENSE"><img src="https://img.shields.io/badge/licence-MIT-20201D?style=flat-square" alt="MIT licence"></a>
 </p>
@@ -32,7 +32,7 @@
   <a href="#availability"><img src="docs/assets/app-store-soon.svg" width="220" height="64" alt="Planned for the Mac App Store; no listing yet"></a>
 </p>
 
-> **Planning stage.** This repo contains the structure, docs, and artwork. There's no runnable app or plugin SDK yet. Everything below describes the plan. NotchMaster is a working title.
+> **Foundation build.** The app opens a simple verification window and native Settings with one persisted expansion speed preference. The notch interface and plugin SDK are not implemented. Features below describe the product plan. NotchMaster is a working title.
 
 ## Features
 
@@ -79,14 +79,24 @@ The [settings spec](docs/SETTINGS.md) covers the layout and behaviour in detail.
 
 ## Development
 
-The planned stack is Swift 6, SwiftUI, and AppKit. An Xcode project or Swift package will be added when app work starts. The minimum macOS version and toolchain are still undecided.
+The foundation uses Swift 6 language mode with complete concurrency checking and SwiftUI. The initial deployment target is macOS 14.0. AppKit is reserved for later work that requires it. Open `NotchMaster.xcodeproj` in Xcode and select the shared NotchMaster scheme and My Mac destination.
 
 Intel Macs are **not** supported due to losing support in recent macOS updates, and app development is designed only for Apple's M series SoC processors. The app will **not** build *or* run on any x86 Mac. **This will not change.**
 
 ```sh
 git clone https://github.com/louisboii747/NotchMaster.git
 cd NotchMaster
+open NotchMaster.xcodeproj
 ```
+
+Build and run the focused preference tests for Apple Silicon:
+
+```sh
+xcodebuild -project NotchMaster.xcodeproj -scheme NotchMaster -configuration Debug -destination 'platform=macOS,arch=arm64' build
+xcodebuild -project NotchMaster.xcodeproj -scheme NotchMaster -configuration Debug -destination 'platform=macOS,arch=arm64' test
+```
+
+The project uses local ad hoc signing without a development team. Distribution signing remains undecided. Run the app from Xcode to see the foundation window; use Open Settings or Command-comma to edit the preference.
 
 | Path | Purpose |
 | :--- | :--- |
@@ -95,7 +105,7 @@ cd NotchMaster
 | [`Sources/UI/`](Sources/UI/README.md) | Settings, notch views, and materials. |
 | [`docs/`](docs/STRUCTURE.md) | File map, architecture, settings, and plugin notes. |
 
-The source folders contain ownership notes for now. Start with the [file map](docs/STRUCTURE.md) and [architecture](docs/ARCHITECTURE.md) for the proposed implementation.
+The source folders contain the Phase 1 foundation and ownership notes. The [file map](docs/STRUCTURE.md) separates implemented files from future work; the [architecture](docs/ARCHITECTURE.md) explains startup and data flow.
 
 ## How to build plugins
 
@@ -106,8 +116,9 @@ For now, [open an issue](https://github.com/louisboii747/NotchMaster/issues) des
 ## Roadmap
 
 - [x] Set up the repository, docs, and initial artwork.
-- [ ] Create the macOS target and choose the toolchain.
+- [x] Create the macOS target and choose the initial toolchain and deployment baseline.
 - [ ] Build the settings window and save preferences.
+  - [x] Add the native Settings scene and local expansion speed preference.
 - [ ] Test notch layout and window behaviour on real Macs.
 - [ ] Define the plugin API and build bundled examples.
 - [ ] Decide how community plugins and App Store distribution will work.
@@ -115,7 +126,7 @@ For now, [open an issue](https://github.com/louisboii747/NotchMaster/issues) des
 
 ## Availability
 
-There's no release date, download, or App Store listing yet. OS and hardware support will be confirmed once there's a build to test.
+There's no release date, download, or App Store listing yet. The foundation targets macOS 14 or later on Apple Silicon; compatibility with the minimum OS still needs runtime validation.
 
 ## Support
 

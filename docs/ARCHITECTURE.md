@@ -1,12 +1,26 @@
 # Architecture direction
 
-Status: initial design. This document records intended boundaries; it does not describe an implemented application.
+Status: Phase 1 foundation implemented. The startup and preference flow below exists; later feature sections record intended boundaries.
 
 ## Product boundary
 
 NotchMaster is a macOS utility that places an expandable hub around a MacBook's display notch. SwiftUI will render its interface, AppKit will manage the overlay window, and Swift 6 will be the language mode.
 
-The repository currently contains documentation and assets only. The deployment target, toolchain version, signing setup, app identifier, purchase products, and iCloud container identifiers will be chosen when the macOS target is created.
+The foundation uses one native Xcode application target, Swift 6 language mode with complete concurrency checking, and an arm64-only macOS 14.0 deployment target. It was developed with Xcode 27.1 and Swift 6.4. Local builds use ad hoc signing and the initial bundle identifier `com.louisboii747.NotchMaster`. Distribution identity, purchase products, and iCloud containers remain undecided.
+
+## Implemented startup and preference flow
+
+`NotchMasterApp` is the `@main` SwiftUI entry point. It retains `AppDependencies` in `@State`, opens a single foundation verification window, and declares a native `Settings` scene. No unfinished service is started. The composition root creates only `PreferencesStore` and passes it explicitly through `SettingsView` to `GeneralSettingsView`.
+
+The store uses Foundation `UserDefaults` for one local duration under `notchExpansionDuration`. It accepts an injected defaults instance so tests can use isolated suites. Missing, malformed, or non-finite values become 0.30 seconds. Finite values are clamped to 0.15–0.60 seconds on load and assignment, and the validated value is persisted. The store does not monitor changes made outside the running app.
+
+`expansionSpeed` is a computed 0–1 control value, not another stored preference. Zero means 0.60 seconds and one means 0.15 seconds. The native slider uses this inverse mapping and displays the duration as its accessible current value. No animation or notch interface is implemented.
+
+`@Observable` lets SwiftUI track the store's duration. `@Bindable` creates the slider's two-way binding, so changes pass through the store's validation and persistence. `@State` retains the app's composition root across SwiftUI updates. `@MainActor` isolates the composition root, store, and views to the UI executor; the tiny defaults updates run there synchronously. No detached work or unchecked sendability is needed. App, Core, and UI remain source groups within one module rather than separate packages.
+
+The macOS 14 baseline permits native Observation and `SettingsLink`. Review that baseline on older hardware before promising runtime compatibility. The bundle identifier, 0.1.0 build metadata, and local signing setup are development choices, not a distribution commitment. App Sandbox is enabled without additional capabilities; hardened runtime is requested but Xcode disables it for ad hoc signing. Distribution signing needs separate validation.
+
+Phase 1 validation passed on an Apple Silicon Mac running macOS 27.2 with Xcode 27.1: Debug preference tests and the Release build with Swift warnings treated as errors. Six preference tests cover eleven cases. An approved temporary XCTest UI harness using identical application sources verified the foundation window, Settings link and keyboard shortcut, inverse slider behaviour, and persistence across termination and relaunch. The temporary harness is outside the repository. macOS 14 runtime behaviour and a full VoiceOver session remain unverified.
 
 ## Layer boundaries
 
@@ -39,7 +53,7 @@ AppKit windows and UI-facing mutable state belong on the main actor. Background 
 
 Plugin registry bookkeeping and plugin execution are separate responsibilities. Async tasks need an owner, cancellation on disable or shutdown, and bounded refresh behaviour. Do not use unchecked sendability or detached tasks to bypass isolation errors.
 
-Enable Swift 6 language mode and concurrency checking when creating the target. The eventual implementation must be compiled with the chosen macOS SDK before any build-support claim is made.
+The foundation enables Swift 6 language mode and complete concurrency checking. Future implementation must also be compiled with the chosen macOS SDK before any build-support claim is made.
 
 ## Preferences and OS integrations
 
