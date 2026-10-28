@@ -45,11 +45,12 @@ I'm building NotchMaster to bring Dynamic Island-style interactions to the Mac. 
 
 ## Free & Pro
 
-The plan is to keep the core free and offer iCloud sync as a Pro upgrade through the Mac App Store. Pricing and plugin delivery are still undecided.
+The plan is to keep the core free and offer iCloud sync and additional features as a Pro upgrade through the Mac App Store. Pricing and plugin delivery are still undecided.
 
 | Feature | Free | Pro |
 | :--- | :--- | :--- |
-| Expandable notch hub | Included | Included |
+| Expandable notch with extensive controls | Included | Included |
+| Now playing screensaver | Not Included | Included |
 | Native settings and local preferences | Included | Included |
 | Plugin registry and enable/disable controls | Included | Included |
 | Expansion speed and Metal border effects | Included | Included |
@@ -58,6 +59,8 @@ The plan is to keep the core free and offer iCloud sync as a Pro upgrade through
 | Purchase restoration and sync controls | Not applicable | Included |
 
 Free features won't require a NotchMaster account. Pro sync would use iCloud and require opt-in. Sync will cover approved preferences and layouts; plugin code, credentials, and private plugin content will stay out of it.
+
+All features are subject to change.
 
 ## Settings
 
