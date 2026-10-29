@@ -67,13 +67,11 @@ struct DisplayGeometry {
             return .failure(.invalidGeometry)
         }
 
-        let sideExtension: CGFloat = 12
-        let bottomExtension: CGFloat = 8
         let previewFrame = CGRect(
-            x: left.maxX - sideExtension,
-            y: safeTop - bottomExtension,
-            width: right.minX - left.maxX + 2 * sideExtension,
-            height: safeAreaTop + bottomExtension
+            x: left.maxX,
+            y: safeTop,
+            width: right.minX - left.maxX,
+            height: safeAreaTop
         )
         guard Self.isValid(previewFrame), frame.contains(previewFrame) else {
             return .failure(.invalidGeometry)

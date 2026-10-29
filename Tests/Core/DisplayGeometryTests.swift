@@ -45,7 +45,7 @@ struct DisplayGeometryTests {
         let placement = try DisplayGeometry.previewPlacement(in: [external.geometry, builtIn.geometry]).get()
 
         #expect(placement.displayName == builtIn.name)
-        #expect(placement.frame == CGRect(x: origin.x + 748, y: origin.y + 1060, width: 204, height: 40))
+        #expect(placement.frame == CGRect(x: origin.x + 760, y: origin.y + 1068, width: 180, height: 32))
         #expect(placement.frame.maxY == builtIn.frame.maxY)
         #expect(builtIn.frame.contains(placement.frame))
     }
@@ -59,7 +59,20 @@ struct DisplayGeometryTests {
 
         let placement = try DisplayGeometry.previewPlacement(in: [display.geometry]).get()
 
-        #expect(placement.frame == CGRect(x: 728, y: 1052, width: 244, height: 48))
+        #expect(placement.frame == CGRect(x: 740, y: 1060, width: 220, height: 40))
+    }
+
+    @Test
+    func acceptsDisplayWithoutRoomForVisualExtensions() throws {
+        var display = DisplayFixture()
+        display.frame.size.height = 36
+        display.left?.origin.y = 4
+        display.right?.origin.y = 4
+
+        let placement = try DisplayGeometry.previewPlacement(in: [display.geometry]).get()
+
+        #expect(placement.frame == CGRect(x: 760, y: 4, width: 180, height: 32))
+        #expect(display.frame.contains(placement.frame))
     }
 
     @Test
@@ -90,7 +103,7 @@ struct DisplayGeometryTests {
     enum InvalidGeometry: CaseIterable {
         case missingLeft, missingRight, emptyArea, overlappingAreas, offCenterGap
         case outsideScreen, wrongTop, wrongSafeBoundary, nonFiniteTop, negativeTop
-        case nonFiniteFrame, negativeFrame, excessiveTop, invalidScale, nonFiniteScale, noRoomForSurface
+        case nonFiniteFrame, negativeFrame, excessiveTop, invalidScale, nonFiniteScale
     }
 
     @Test(arguments: InvalidGeometry.allCases)
@@ -127,10 +140,6 @@ struct DisplayGeometryTests {
             display.scale = 0
         case .nonFiniteScale:
             display.scale = .infinity
-        case .noRoomForSurface:
-            display.frame.size.height = 36
-            display.left?.origin.y = 4
-            display.right?.origin.y = 4
         }
 
         #expect(DisplayGeometry.previewPlacement(in: [display.geometry]) == .failure(.invalidGeometry))
