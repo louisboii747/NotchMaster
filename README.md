@@ -32,7 +32,7 @@
   <a href="#availability"><img src="docs/assets/app-store-soon.svg" width="220" height="64" alt="Planned for the Mac App Store; no listing yet"></a>
 </p>
 
-> **Foundation build.** The app opens a simple verification window and native Settings with one persisted expansion speed preference. The notch interface and plugin SDK are not implemented. Features below describe the product plan. NotchMaster is a working title.
+> **Prototype build.** The app opens a verification window with a temporary Show/Hide Notch Preview control and native Settings with one persisted expansion speed preference. The preview is a passive black surface around a supported built-in physical notch. Expansion and the plugin SDK are not implemented. Features below describe the product plan. NotchMaster is a working title.
 
 ## Features
 
@@ -79,7 +79,7 @@ The [settings spec](docs/SETTINGS.md) covers the layout and behaviour in detail.
 
 ## Development
 
-The foundation uses Swift 6 language mode with complete concurrency checking and SwiftUI. The initial deployment target is macOS 14.0. AppKit is reserved for later work that requires it. Open `NotchMaster.xcodeproj` in Xcode and select the shared NotchMaster scheme and My Mac destination.
+The prototype uses Swift 6 language mode with complete concurrency checking, SwiftUI presentation, and an AppKit-managed preview panel. The initial deployment target is macOS 14.0. Open `NotchMaster.xcodeproj` in Xcode and select the shared NotchMaster scheme and My Mac destination.
 
 Intel Macs are **not** supported due to losing support in recent macOS updates, and app development is designed only for Apple's M series SoC processors. The app will **not** build *or* run on any x86 Mac. **This will not change.**
 
@@ -89,14 +89,14 @@ cd NotchMaster
 open NotchMaster.xcodeproj
 ```
 
-Build and run the focused preference tests for Apple Silicon:
+Build and run the focused preference, geometry, and window-controller tests for Apple Silicon:
 
 ```sh
 xcodebuild -project NotchMaster.xcodeproj -scheme NotchMaster -configuration Debug -destination 'platform=macOS,arch=arm64' build
 xcodebuild -project NotchMaster.xcodeproj -scheme NotchMaster -configuration Debug -destination 'platform=macOS,arch=arm64' test
 ```
 
-The project uses local ad hoc signing without a development team. Distribution signing remains undecided. Run the app from Xcode to see the foundation window; use Open Settings or Command-comma to edit the preference.
+The project uses local ad hoc signing without a development team. Distribution signing remains undecided. Run the app from Xcode and use Show/Hide Notch Preview to toggle the static surface. It starts hidden, does not take keyboard focus, and passes mouse events through. Unsupported, inactive, or mirrored built-in displays produce an explanatory message without showing a panel. Display changes revalidate placement; unsupported geometry or sleep hides the preview until explicitly shown again. Use Open Settings or Command-comma to edit the preference; the static preview does not use expansion speed.
 
 | Path | Purpose |
 | :--- | :--- |
@@ -105,7 +105,7 @@ The project uses local ad hoc signing without a development team. Distribution s
 | [`Sources/UI/`](Sources/UI/README.md) | Settings, notch views, and materials. |
 | [`docs/`](docs/STRUCTURE.md) | File map, architecture, settings, and plugin notes. |
 
-The source folders contain the Phase 1 foundation and ownership notes. The [file map](docs/STRUCTURE.md) separates implemented files from future work; the [architecture](docs/ARCHITECTURE.md) explains startup and data flow.
+The source folders contain the foundation, static preview, and ownership notes. The [file map](docs/STRUCTURE.md) separates implemented files from future work; the [architecture](docs/ARCHITECTURE.md) explains startup and data flow.
 
 ## How to build plugins
 

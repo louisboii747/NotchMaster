@@ -47,7 +47,7 @@
 		};
 		200000000000000000000004 = {
 			isa = PBXGroup;
-			children = (200000000000000000000005);
+			children = (200000000000000000000005, 20000000000000000000000C);
 			path = Core;
 			sourceTree = "<group>";
 		};
@@ -59,7 +59,7 @@
 		};
 		200000000000000000000006 = {
 			isa = PBXGroup;
-			children = (300000000000000000000004, 200000000000000000000007);
+			children = (300000000000000000000004, 200000000000000000000007, 20000000000000000000000D);
 			path = UI;
 			sourceTree = "<group>";
 		};
@@ -71,7 +71,7 @@
 		};
 		200000000000000000000008 = {
 			isa = PBXGroup;
-			children = (300000000000000000000007);
+			children = (300000000000000000000007, 30000000000000000000000F, 300000000000000000000010);
 			path = Tests/Core;
 			sourceTree = "<group>";
 		};
@@ -93,6 +93,28 @@
 			path = Config;
 			sourceTree = "<group>";
 		};
+		20000000000000000000000C = {
+			isa = PBXGroup;
+			children = (30000000000000000000000C, 30000000000000000000000D);
+			path = Windowing;
+			sourceTree = "<group>";
+		};
+		20000000000000000000000D = {
+			isa = PBXGroup;
+			children = (30000000000000000000000E);
+			path = Notch;
+			sourceTree = "<group>";
+		};
+		30000000000000000000000C = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayGeometry.swift; sourceTree = "<group>"; };
+		30000000000000000000000D = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchWindowController.swift; sourceTree = "<group>"; };
+		30000000000000000000000E = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchView.swift; sourceTree = "<group>"; };
+		30000000000000000000000F = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DisplayGeometryTests.swift; sourceTree = "<group>"; };
+		300000000000000000000010 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchWindowControllerTests.swift; sourceTree = "<group>"; };
+		400000000000000000000009 = { isa = PBXBuildFile; fileRef = 30000000000000000000000C; };
+		40000000000000000000000A = { isa = PBXBuildFile; fileRef = 30000000000000000000000D; };
+		40000000000000000000000B = { isa = PBXBuildFile; fileRef = 30000000000000000000000E; };
+		40000000000000000000000C = { isa = PBXBuildFile; fileRef = 30000000000000000000000F; };
+		40000000000000000000000D = { isa = PBXBuildFile; fileRef = 300000000000000000000010; };
 		300000000000000000000001 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchMasterApp.swift; sourceTree = "<group>"; };
 		300000000000000000000002 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDependencies.swift; sourceTree = "<group>"; };
 		300000000000000000000003 = { isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesStore.swift; sourceTree = "<group>"; };
@@ -137,12 +159,12 @@
 		600000000000000000000001 = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
-			files = (400000000000000000000001, 400000000000000000000002, 400000000000000000000003, 400000000000000000000004, 400000000000000000000005, 400000000000000000000006);
+			files = (400000000000000000000001, 400000000000000000000002, 400000000000000000000003, 400000000000000000000004, 400000000000000000000005, 400000000000000000000006, 400000000000000000000009, 40000000000000000000000A, 40000000000000000000000B);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		600000000000000000000002 = { isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 		600000000000000000000003 = { isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (400000000000000000000008); runOnlyForDeploymentPostprocessing = 0; };
-		600000000000000000000004 = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (400000000000000000000007); runOnlyForDeploymentPostprocessing = 0; };
+		600000000000000000000004 = { isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (400000000000000000000007, 40000000000000000000000C, 40000000000000000000000D); runOnlyForDeploymentPostprocessing = 0; };
 		600000000000000000000005 = { isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 		600000000000000000000006 = { isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
 		700000000000000000000001 = { isa = XCConfigurationList; buildConfigurations = (800000000000000000000001, 800000000000000000000002); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };

@@ -7,7 +7,7 @@ struct NotchMasterApp: App {
 
     var body: some Scene {
         Window("NotchMaster", id: "foundation") {
-            AppShellView()
+            AppShellView(notchWindowController: dependencies.notchWindowController)
         }
         .defaultSize(width: 480, height: 280)
 
