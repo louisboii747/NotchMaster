@@ -1,0 +1,47 @@
+name: Feature request
+description: Suggest an improvement, notch interaction, or future plugin.
+title: "[Feature] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        NotchMaster is being built incrementally. Read the README and roadmap before proposing a feature. The notch interface and plugin SDK are not implemented yet.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      description: Choose the part of NotchMaster this idea relates to.
+      options:
+        - Notch interface and window behaviour
+        - Settings and preferences
+        - Plugins and plugin SDK
+        - Accessibility
+        - Visual effects and performance
+        - Documentation and developer experience
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: use-case
+    attributes:
+      label: Problem or use case
+      description: What are you trying to do, and why would this be useful?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behaviour
+      description: Explain how you imagine the feature working from the user's perspective.
+    validations:
+      required: true
+  - type: textarea
+    id: plugin-details
+    attributes:
+      label: Plugin details (if applicable)
+      description: For plugin ideas, describe compact and expanded states, data sources, permissions, and how it should behave when unavailable or disabled.
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives or additional context
+      description: Mention workarounds, related proposals, mockups, or relevant platform constraints.

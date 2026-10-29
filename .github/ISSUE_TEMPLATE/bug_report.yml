@@ -1,0 +1,57 @@
+name: Bug report
+description: Report a problem with behaviour already implemented in NotchMaster.
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. NotchMaster is in its foundation stage, so please check the README to see which features are implemented. For planned features, use the feature request form instead.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you were doing when it occurred.
+      placeholder: "When I open Settings and change..."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: List the steps another person can follow to reproduce the issue.
+      placeholder: |
+        1. Open NotchMaster
+        2. ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: What should have happened instead?
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: NotchMaster version or commit
+      description: Include the commit SHA if you're running a development build.
+      placeholder: "e.g. main at abc1234"
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: "e.g. macOS 27.2"
+    validations:
+      required: true
+  - type: input
+    id: mac
+    attributes:
+      label: Mac model and chip
+      placeholder: "e.g. MacBook Air (M5)"
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots, logs, or additional context
+      description: Attach supporting evidence if available. Remove personal information, credentials, and tokens from logs before posting.
