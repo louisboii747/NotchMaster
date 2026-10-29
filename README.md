@@ -4,9 +4,9 @@
 
 <h1 align="center">NotchMaster</h1>
 
-<p align="center">
-  An expandable notch app with plugin support for your Apple Silicon Mac.
-</p>
+<h3 align="center">
+  An expandable, feature rich notch app with plugin support for your Apple Silicon Mac.
+</h3>
 
 <p align="center">
   <img src="https://img.shields.io/badge/status-foundation-EE5836?style=flat-square" alt="Foundation build">
@@ -36,7 +36,7 @@
 
 ## Features
 
-I'm building NotchMaster to bring Dynamic Island-style interactions to the Mac. The hub will sit around the MacBook notch and expand to show controls and information from the plugins you enable.
+NotchMaster is designed to bring Dynamic Island-style interactions to the Mac. The hub will sit behind the physical MacBook notch and expand to show controls and information from the plugins you enable.
 
 - Compact and expanded views for each plugin.
 - Native settings for launch at login, expansion speed, and plugin controls.
@@ -46,7 +46,7 @@ I'm building NotchMaster to bring Dynamic Island-style interactions to the Mac. 
 
 ## Free & Pro
 
-The plan is to keep the core free and offer iCloud sync and additional features as a Pro upgrade through the Mac App Store. Pricing and plugin delivery are still undecided.
+NotchMaster keeps the core free, but offers iCloud sync and additional features as a Pro upgrade through the Mac App Store. Pricing and plugin delivery, and some Pro features are still undecided.
 
 | Feature | Free | Pro |
 | :--- | :--- | :--- |
@@ -63,31 +63,33 @@ Free features won't require a NotchMaster account. Pro sync would use iCloud and
 
 All features are subject to change.
 
-## Settings
+## Compatibility
 
-The settings window will use a sidebar and grouped forms, following macOS System Settings conventions.
-
-| Category | Controls |
-| :--- | :--- |
-| General | Launch at Login and Dynamic Notch Expansion Speed. |
-| Advanced | Enable Metal Border Shaders and rendering options. |
-| Installed Plugins | Plugin names, descriptions, and enable/disable switches. |
-| Pro Sync | Upgrade, restore purchases, and check iCloud sync status. |
-| About | Version, licence, and project links. |
-
-The [settings spec](docs/SETTINGS.md) covers the layout and behaviour in detail.
+| Mac | Compatible | Notes
+| :--- | :--- |  :--- |
+| M1 | ✅ Fully Compatible. | Fully compatible to build, test and use NotchMaster.
+| M2 | ✅ Fully Compatible. | Fully compatible to build, test and use NotchMaster.
+| M3 | ✅ Fully Compatible. | Fully compatible to build, test and use NotchMaster.
+| M4 | ✅ Fully Compatible. | Fully compatible to build, test and use NotchMaster.
+| M5 | ✅ Fully Compatible. | Fully compatible to build, test and use NotchMaster.
+| M6 | ✅ Fully Compatible. | Fully compatible to build, test and use NotchMaster.
+| Apple Silicon Mac Mini, Mac, Mac Pro, etc. | ✅ Fully Compatible. | Any Mac without a built in display will have the Virtual Notch implemented. All features are still compatible.
+| Intel x86_64 | ❌ NOT Compatible. | Why? Apple dropped support for Intel Macs with macOS 27, and development of NotchMaster is designed for Apple Silicon Macs only.
 
 ## Development
 
 The prototype uses Swift 6 language mode with complete concurrency checking, SwiftUI presentation, and an AppKit-managed preview panel. The initial deployment target is macOS 14.0. Open `NotchMaster.xcodeproj` in Xcode and select the shared NotchMaster scheme and My Mac destination.
 
-Intel Macs are **not** supported due to losing support in recent macOS updates, and app development is designed only for Apple's M series SoC processors. The app will **not** build *or* run on any x86 Mac. **This will not change.**
+As mentioned in [Compatibility](#compatibility), Intel Macs are **not** supported due to losing support in recent macOS updates, and app development is designed only for Apple's M series SoC processors. The NotchMaster app will **not** build *or* run on **any** x86_64 Mac. **This will not change.**
+
+Ensure Xcode and Git are installed on your Mac, then use these terminal commands to clone and open the NotchMaster repository.
 
 ```sh
 git clone https://github.com/louisboii747/NotchMaster.git
 cd NotchMaster
 open NotchMaster.xcodeproj
 ```
+
 
 Build and run the focused preference, geometry, and window-controller tests for Apple Silicon:
 
@@ -109,24 +111,10 @@ The source folders contain the foundation, static preview, and ownership notes. 
 
 ## How to build plugins
 
-The SDK doesn't exist yet. The [plugin guide](docs/PLUGINS.md) records the proposed lifecycle, permissions, and cleanup requirements. Third-party code loading and App Store packaging still need to be decided.
+The plugin SDK will enter development shortly after NotchMaster has a working, downloadable version. The [plugin guide](docs/PLUGINS.md) records the proposed lifecycle, permissions, and cleanup requirements. Third-party code loading and App Store packaging still need to be decided.
 
 For now, [open an issue](https://github.com/louisboii747/NotchMaster/issues) describing what your plugin would do, what it should show in each view, and which data or permissions it would need.
 
-## Roadmap
-
-- [x] Set up the repository, docs, and initial artwork.
-- [x] Create the macOS target and choose the initial toolchain and deployment baseline.
-- [ ] Build the settings window and save preferences.
-  - [x] Add the native Settings scene and local expansion speed preference.
-- [ ] Test notch layout and window behaviour on real Macs.
-- [ ] Define the plugin API and build bundled examples.
-- [ ] Decide how community plugins and App Store distribution will work.
-- [ ] Add Pro purchases and opt-in iCloud sync.
-
-## Availability
-
-There's no release date, download, or App Store listing yet. The foundation targets macOS 14 or later on Apple Silicon; compatibility with the minimum OS still needs runtime validation.
 
 ## Support
 
@@ -139,7 +127,7 @@ There's no release date, download, or App Store listing yet. The foundation targ
   <img src="https://img.shields.io/badge/Donations-not%20set%20up-737269?style=for-the-badge" alt="Donations aren't set up yet">
 </p>
 
-If you've got a plugin idea or spot a problem in the docs, [open an issue](https://github.com/louisboii747/NotchMaster/issues). Pull requests for docs, structure, and artwork are welcome at this stage.
+If you have a plugin idea or spot a problem in the docs, feel free to share it by [opening an issue](https://github.com/louisboii747/NotchMaster/issues). Pull requests for docs, structure, and artwork are welcome at this stage.
 
 The donation button is inactive for now. Any future donations will support development and won't unlock Pro.
 
