@@ -47,6 +47,7 @@ NotchMaster/
 └── docs/
     ├── STRUCTURE.md
     ├── ARCHITECTURE.md
+    ├── PROTOTYPE_TESTING.md
     ├── SETTINGS.md
     ├── PLUGINS.md
     ├── BRAND.md
