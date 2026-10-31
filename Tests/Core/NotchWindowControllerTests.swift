@@ -485,7 +485,8 @@ struct NotchWindowControllerTests {
         let controller = NotchWindowController(
             displays: { [display] },
             expansionDuration: { 0.15 },
-            reduceMotion: { false }
+            reduceMotion: { false },
+            cursorPosition: { .zero }
         ) { NSView() }
         defer { controller.hidePreview() }
         controller.showPreview()

@@ -12,10 +12,15 @@ final class NotchWindowController: NSWindowController {
     private let makeContentView: @MainActor () -> NSView
     private let expansionDuration: @MainActor () -> TimeInterval
     private let reduceMotion: @MainActor () -> Bool
+    private let cursorPosition: @MainActor () -> CGPoint
+    private let uptime: @MainActor () -> TimeInterval
+    private let performHapticFeedback: @MainActor () -> Void
     private let notificationCenter: NotificationCenter
     private let workspaceNotificationCenter: NotificationCenter
     private var presentedDisplay: DisplayGeometry?
     @ObservationIgnored private(set) var frameAnimation: NotchFrameAnimation?
+    @ObservationIgnored private(set) var hoverTimer: Timer?
+    @ObservationIgnored private var hoverInteraction: NotchHoverInteraction?
 
     init(
         displays: @escaping @MainActor () -> [DisplayGeometry] = DisplayGeometry.current,
@@ -23,12 +28,20 @@ final class NotchWindowController: NSWindowController {
         workspaceNotificationCenter: NotificationCenter = NSWorkspace.shared.notificationCenter,
         expansionDuration: @escaping @MainActor () -> TimeInterval = { PreferencesStore.defaultExpansionDuration },
         reduceMotion: @escaping @MainActor () -> Bool = { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion },
+        cursorPosition: @escaping @MainActor () -> CGPoint = { NSEvent.mouseLocation },
+        uptime: @escaping @MainActor () -> TimeInterval = { ProcessInfo.processInfo.systemUptime },
+        performHapticFeedback: @escaping @MainActor () -> Void = {
+            NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now)
+        },
         makeContentView: @escaping @MainActor () -> NSView
     ) {
         self.displays = displays
         self.makeContentView = makeContentView
         self.expansionDuration = expansionDuration
         self.reduceMotion = reduceMotion
+        self.cursorPosition = cursorPosition
+        self.uptime = uptime
+        self.performHapticFeedback = performHapticFeedback
         self.notificationCenter = notificationCenter
         self.workspaceNotificationCenter = workspaceNotificationCenter
         super.init(window: nil)
@@ -57,6 +70,7 @@ final class NotchWindowController: NSWindowController {
         notificationCenter.removeObserver(self)
         workspaceNotificationCenter.removeObserver(self)
         frameAnimation?.stop()
+        hoverTimer?.invalidate()
         window?.close()
     }
 
@@ -74,10 +88,12 @@ final class NotchWindowController: NSWindowController {
 
     func toggleExpansion() {
         guard isPreviewVisible else { return }
+        hoverInteraction?.manualOverride(at: cursorPosition())
         presentPreview(isExpanded: !isExpanded, animated: true)
     }
 
     func hidePreview() {
+        stopHoverTracking()
         cancelFrameAnimation()
         window?.orderOut(nil)
         presentedDisplay = nil
@@ -86,14 +102,16 @@ final class NotchWindowController: NSWindowController {
         statusMessage = "Notch preview hidden."
     }
 
-    private func presentPreview(isExpanded: Bool, animated: Bool = false) {
+    private func presentPreview(isExpanded: Bool, animated: Bool = false, hoverTriggered: Bool = false) {
         cancelFrameAnimation()
         let currentDisplays = displays()
         switch DisplayGeometry.previewPlacement(in: currentDisplays, isExpanded: isExpanded) {
         case .success(let placement):
             let panel = window ?? makePanel(frame: placement.frame)
             let display = currentDisplays.first(where: \.isBuiltIn)
-            if animated, isPreviewVisible, display == presentedDisplay,
+            let displayUnchanged = display == presentedDisplay
+            let expansionChanged = self.isExpanded != isExpanded
+            if animated, isPreviewVisible, displayUnchanged,
                !reduceMotion(), panel.frame != placement.frame {
                 let animation = NotchFrameAnimation(
                     panel: panel,
@@ -111,10 +129,53 @@ final class NotchWindowController: NSWindowController {
             self.isExpanded = isExpanded
             let previewName = isExpanded ? "Expanded notch preview" : "Notch preview"
             statusMessage = "\(previewName) shown on \(placement.displayName)."
+            if !displayUnchanged || hoverInteraction == nil {
+                configureHoverTracking(displays: currentDisplays)
+            }
+            if hoverTriggered, displayUnchanged, expansionChanged {
+                performHapticFeedback()
+            }
         case .failure(let reason):
             hidePreview()
             statusMessage = reason.message
         }
+    }
+
+    private func configureHoverTracking(displays: [DisplayGeometry]) {
+        guard let display = displays.first(where: \.isBuiltIn),
+              case .success(let compact) = DisplayGeometry.previewPlacement(in: displays),
+              case .success(let expanded) = DisplayGeometry.previewPlacement(in: displays, isExpanded: true) else {
+            stopHoverTracking()
+            return
+        }
+        let regions = NotchHoverRegions(
+            compactFrame: compact.frame,
+            expandedFrame: expanded.frame,
+            displayFrame: display.frame
+        )
+        hoverInteraction = NotchHoverInteraction(regions: regions, position: cursorPosition())
+        guard hoverTimer == nil else { return }
+        let timer = Timer(timeInterval: NotchHoverInteraction.samplingInterval, repeats: true) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.sampleHover()
+            }
+        }
+        timer.tolerance = 0.01
+        hoverTimer = timer
+        RunLoop.main.add(timer, forMode: .common)
+    }
+
+    private func sampleHover() {
+        guard isPreviewVisible,
+              let expanded = hoverInteraction?.update(position: cursorPosition(), time: uptime()),
+              expanded != isExpanded else { return }
+        presentPreview(isExpanded: expanded, animated: true, hoverTriggered: true)
+    }
+
+    private func stopHoverTracking() {
+        hoverTimer?.invalidate()
+        hoverTimer = nil
+        hoverInteraction = nil
     }
 
     private func cancelFrameAnimation() {
@@ -147,6 +208,7 @@ final class NotchWindowController: NSWindowController {
 
     @objc private func displayConfigurationChanged(_ notification: Notification) {
         guard isPreviewVisible else { return }
+        stopHoverTracking()
         showPreview()
     }
 

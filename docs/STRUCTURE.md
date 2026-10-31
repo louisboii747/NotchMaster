@@ -1,6 +1,6 @@
 # Repository file map
 
-This is the foundation and manual preview file layout. The native Xcode project has one macOS application target and one focused Swift Testing target. There are no third-party dependencies or packages.
+This is the foundation and hover preview file layout. The native Xcode project has one macOS application target and one focused Swift Testing target. There are no third-party dependencies or packages.
 
 ```text
 NotchMaster/
@@ -29,7 +29,8 @@ NotchMaster/
 │   │   ├── Settings/PreferencesStore.swift
 │   │   └── Windowing/
 │   │       ├── DisplayGeometry.swift
-│   │       └── NotchWindowController.swift
+│   │       ├── NotchWindowController.swift
+│   │       └── NotchHoverInteraction.swift
 │   └── UI/
 │       ├── README.md
 │       ├── AppShellView.swift
@@ -41,7 +42,8 @@ NotchMaster/
 │   └── Core/
 │       ├── PreferencesStoreTests.swift
 │       ├── DisplayGeometryTests.swift
-│       └── NotchWindowControllerTests.swift
+│       ├── NotchWindowControllerTests.swift
+│       └── NotchHoverTests.swift
 └── docs/
     ├── STRUCTURE.md
     ├── ARCHITECTURE.md
@@ -64,7 +66,7 @@ NotchMaster/
 | `Sources/UI/` | Settings, notch presentation, reusable materials | Core contracts and SwiftUI; AppKit bridging only when presentation requires it |
 | `docs/` | Product intent, architecture, implementation requirements | Repository-relative documentation and assets |
 
-These are source groups in the macOS target. Separate modules or packages should be introduced only when the dependency and testing needs justify them. `Config/Shared.xcconfig` supplies the arm64-only architecture, macOS baseline, Swift 6 concurrency settings, development version, and local signing defaults. The shared scheme runs preference, display-geometry, and window-controller tests. App icons are resized copies of the existing logo; documentation artwork is preserved.
+These are source groups in the macOS target. Separate modules or packages should be introduced only when the dependency and testing needs justify them. `Config/Shared.xcconfig` supplies the arm64-only architecture, macOS baseline, Swift 6 concurrency settings, development version, and local signing defaults. The shared scheme runs preference, display-geometry, window-controller and hover tests. App icons are resized copies of the existing logo; documentation artwork is preserved.
 
 ## Proposed implementation file boundaries
 
@@ -77,6 +79,7 @@ The following names describe the wider plan. Only the Swift files shown in the t
 | `Sources/UI/AppShellView.swift` | Verification window and temporary Show/Hide Notch Preview and Expand/Collapse controls. |
 | `Sources/Core/Plugins/PluginRegistry.swift` | Plugin identities, lifecycle, and enabled state. |
 | `Sources/Core/Windowing/NotchWindowController.swift` | Implemented passive AppKit panel ownership, presentation, and display/sleep handling. |
+| `Sources/Core/Windowing/NotchHoverInteraction.swift` | Implemented hover boundaries, entry detection, delayed collapse and manual overrides. |
 | `Sources/Core/Windowing/DisplayGeometry.swift` | Implemented built-in display selection and validated compact and expanded preview geometry. |
 | `Sources/Core/Settings/PreferencesStore.swift` | Validated local preferences and persistence. |
 | `Sources/Core/Services/LoginItemService.swift` | Launch-at-login status and registration. |

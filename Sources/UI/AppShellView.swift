@@ -10,7 +10,7 @@ struct AppShellView: View {
                 .font(.largeTitle)
             Text("Foundation build")
                 .font(.headline)
-            Text("A manually expandable notch preview and one local preference.")
+            Text("An expandable notch preview and one local preference.")
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             Button(notchWindowController.isPreviewVisible ? "Hide Notch Preview" : "Show Notch Preview") {
