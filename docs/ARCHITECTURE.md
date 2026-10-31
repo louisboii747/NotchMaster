@@ -1,10 +1,10 @@
 # Architecture direction
 
-Status: Phase 1 foundation and the first static notch preview are implemented. The startup, preference, and preview flows below exist; later feature sections record intended boundaries.
+Status: Phase 1 foundation and the first manually expandable notch preview are implemented. The startup, preference, and preview flows below exist; later feature sections record intended boundaries.
 
 ## Product boundary
 
-NotchMaster is a macOS utility intended to place an expandable hub around a MacBook's display notch. SwiftUI renders the static prototype, AppKit manages its overlay window, and Swift 6 is the language mode.
+NotchMaster is a macOS utility intended to place an expandable hub around a MacBook's display notch. SwiftUI renders the prototype, AppKit manages its overlay window, and Swift 6 is the language mode.
 
 The foundation uses one native Xcode application target, Swift 6 language mode with complete concurrency checking, and an arm64-only macOS 14.0 deployment target. It was developed with Xcode 27.1 and Swift 6.4. Local builds use ad hoc signing and the initial bundle identifier `com.louisboii747.NotchMaster`. Distribution identity, purchase products, and iCloud containers remain undecided.
 
@@ -14,7 +14,7 @@ The foundation uses one native Xcode application target, Swift 6 language mode w
 
 The store uses Foundation `UserDefaults` for one local duration under `notchExpansionDuration`. It accepts an injected defaults instance so tests can use isolated suites. Missing, malformed, or non-finite values become 0.30 seconds. Finite values are clamped to 0.15–0.60 seconds on load and assignment, and the validated value is persisted. The store does not monitor changes made outside the running app.
 
-`expansionSpeed` is a computed 0–1 control value, not another stored preference. Zero means 0.60 seconds and one means 0.15 seconds. The native slider uses this inverse mapping and displays the duration as its accessible current value. The static preview does not read or change this preference; no expansion animation is implemented.
+`expansionSpeed` is a computed 0–1 control value, not another stored preference. Zero means 0.60 seconds and one means 0.15 seconds. The native slider uses this inverse mapping and displays the duration as its accessible current value. The manual preview does not read or change this preference; no expansion animation is implemented.
 
 `@Observable` lets SwiftUI track the store's duration. `@Bindable` creates the slider's two-way binding, so changes pass through the store's validation and persistence. `@State` retains the app's composition root across SwiftUI updates. `@MainActor` isolates the composition root, store, and views to the UI executor; the tiny defaults updates run there synchronously. No detached work or unchecked sendability is needed. App, Core, and UI remain source groups within one module rather than separate packages.
 
@@ -34,17 +34,19 @@ Use dependency injection at the App boundary. Keep preferences, OS-reported stat
 
 ## Windows and display geometry
 
-`NotchWindowController` owns a lazily created borderless, non-activating `NSPanel` on the main actor. It exposes observable visibility and status to the temporary shell control. Its injected display provider reads `NSScreen` snapshots; an injected content factory supplies the SwiftUI hosting view. Notification centers are injectable for lifecycle tests.
+`NotchWindowController` owns a lazily created borderless, non-activating `NSPanel` on the main actor. It exposes observable visibility, expansion state, and status to the temporary shell controls. Its injected display provider reads `NSScreen` snapshots; an injected content factory supplies the SwiftUI hosting view. Notification centers are injectable for lifecycle tests.
 
 `DisplayGeometry` selects a single active built-in display using the public Core Graphics display identity, independent of the main or keyboard-focused screen. Mirroring is unsupported. A positive top safe-area inset and consistent auxiliary top-left and top-right rectangles must describe a central gap in global AppKit coordinates. Missing, non-finite, or inconsistent geometry is rejected with a visible explanation, without falling back to guessed coordinates or an external display.
 
 The compact panel spans exactly that reported gap, from the left auxiliary area's right edge to the right auxiliary area's left edge, with no side or bottom extension. Its height is the reported top safe-area inset, with its top at the display's top edge and its bottom at the safe-area boundary. Because the physical notch contains no drawable pixels, toggling the compact preview may produce little or no visible difference. The panel bypasses AppKit's normal visible-frame constraint only after geometry validation so it can occupy the menu-bar region. `NotchView` draws a solid black surface with rounded bottom corners; there are no controls or animations inside it.
 
-The panel uses the status-bar level with all-Spaces and full-screen auxiliary collection behaviour. It cannot become key or main, ignores mouse events, has no shadow or presentation animation, and is ordered front without requesting app activation. Display-configuration notifications revalidate a visible preview and reposition or hide it. System or display sleep hides it. After an unsupported configuration or sleep, the user must explicitly show it again. Visibility is transient and starts hidden on launch. Controller teardown removes observers and closes the panel.
+While the preview is visible, `AppShellView` offers a temporary Expand/Collapse button. Expansion targets 380 points wide and 120 points tall, never smaller than the reported notch gap. `DisplayGeometry` caps both side extensions equally to the smaller available side margin and caps the bottom extension to the available display height, preserving the gap's centre and the display's top edge. The controller revalidates geometry and immediately resizes the same panel and content view without animation. Collapse restores the exact compact frame. Expansion while hidden has no effect; no hover handling or plugin content is implemented.
+
+The panel uses the status-bar level with all-Spaces and full-screen auxiliary collection behaviour. It cannot become key or main, ignores mouse events, has no shadow or presentation animation, and is ordered front without requesting app activation. Display-configuration notifications revalidate a visible preview and reposition or hide it, preserving expansion when geometry remains supported. System or display sleep hides it. Hiding always clears expansion. After an unsupported configuration or sleep, the user must explicitly show it again in compact form. Visibility and expansion are transient and start hidden and compact on launch. Controller teardown removes observers and closes the panel.
 
 These choices still require physical notched-display, menu-bar, Spaces, full-screen, and focus testing on hardware. External-only, clamshell, mirrored, and unnotched configurations intentionally have no preview. No fake-notch fallback is implemented.
 
-Static preview validation passed on arm64 macOS 27.2 with Xcode 27.1: the Debug build and all 17 test functions, covering 39 cases, with Swift warnings treated as errors. Tests cover synthetic display geometry, passive panel configuration and focus preservation, repeated show/hide, display changes, sleep, controller cleanup, and the existing preference behaviour. They do not establish physical notch alignment or cross-application interaction.
+Manual preview validation passed on arm64 macOS 27.2 with Xcode 27.2: the Debug build and all 23 test functions, covering 70 cases, with Swift warnings treated as errors. Tests cover synthetic compact and expanded geometry, display-bound clamping, passive panel and content reuse, focus preservation, repeated expansion/collapse and show/hide, display changes, expansion resets, sleep, controller cleanup, and the existing preference behaviour. They do not establish physical notch alignment or cross-application interaction.
 
 Later interactive work should:
 
@@ -104,7 +106,7 @@ Bundled modules, constrained declarative content, supported extension mechanisms
 
 ## Apple references
 
-Consulted on 28–29 October 2026. These links describe platform APIs and review requirements; features beyond the foundation and static preview remain design proposals.
+Consulted on 28–29 October 2026. These links describe platform APIs and review requirements; features beyond the foundation and manual preview remain design proposals.
 
 - [NavigationSplitView](https://developer.apple.com/documentation/swiftui/navigationsplitview)
 - [GroupedFormStyle](https://developer.apple.com/documentation/swiftui/groupedformstyle)

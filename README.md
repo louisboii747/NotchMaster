@@ -32,7 +32,7 @@
   <a href="#availability"><img src="docs/assets/app-store-soon.svg" width="220" height="64" alt="Planned for the Mac App Store; no listing yet"></a>
 </p>
 
-> **Prototype build.** The app opens a verification window with a temporary Show/Hide Notch Preview control and native Settings with one persisted expansion speed preference. The preview is a passive black surface around a supported built-in physical notch. Expansion and the plugin SDK are not implemented. Features below describe the product plan. NotchMaster is a working title.
+> **Prototype build.** The app opens a verification window with temporary Show/Hide Notch Preview and Expand/Collapse controls and native Settings with one persisted expansion speed preference. The preview is a passive black surface around a supported built-in physical notch. Expansion is manual and immediate; hover interaction, animations, and the plugin SDK are not implemented. Features below describe the product plan. NotchMaster is a working title.
 
 ## Features
 
@@ -98,7 +98,7 @@ xcodebuild -project NotchMaster.xcodeproj -scheme NotchMaster -configuration Deb
 xcodebuild -project NotchMaster.xcodeproj -scheme NotchMaster -configuration Debug -destination 'platform=macOS,arch=arm64' test
 ```
 
-The project uses local ad hoc signing without a development team. Distribution signing remains undecided. Run the app from Xcode and use Show/Hide Notch Preview to toggle the static surface. It starts hidden, does not take keyboard focus, and passes mouse events through. Unsupported, inactive, or mirrored built-in displays produce an explanatory message without showing a panel. Display changes revalidate placement; unsupported geometry or sleep hides the preview until explicitly shown again. Use Open Settings or Command-comma to edit the preference; the static preview does not use expansion speed.
+The project uses local ad hoc signing without a development team. Distribution signing remains undecided. Run the app from Xcode and use Show Notch Preview, then Expand and Collapse in the verification window. Expansion resizes the same black panel around and below the reported physical notch, keeping its top aligned with the display. Collapse restores the exact compact frame. The preview starts hidden, does not take keyboard focus, and passes mouse events through. Unsupported, inactive, or mirrored built-in displays produce an explanatory message without showing a panel. Display changes revalidate placement; hiding, unsupported geometry, or sleep resets expansion. After hiding, the preview must be explicitly shown again and starts compact. Use Open Settings or Command-comma to edit the preference; immediate resizing does not use expansion speed.
 
 | Path | Purpose |
 | :--- | :--- |
@@ -107,7 +107,7 @@ The project uses local ad hoc signing without a development team. Distribution s
 | [`Sources/UI/`](Sources/UI/README.md) | Settings, notch views, and materials. |
 | [`docs/`](docs/STRUCTURE.md) | File map, architecture, settings, and plugin notes. |
 
-The source folders contain the foundation, static preview, and ownership notes. The [file map](docs/STRUCTURE.md) separates implemented files from future work; the [architecture](docs/ARCHITECTURE.md) explains startup and data flow.
+The source folders contain the foundation, manual notch preview, and ownership notes. The [file map](docs/STRUCTURE.md) separates implemented files from future work; the [architecture](docs/ARCHITECTURE.md) explains startup and data flow.
 
 ## How to build plugins
 

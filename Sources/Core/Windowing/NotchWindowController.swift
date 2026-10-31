@@ -5,6 +5,7 @@ import Observation
 @Observable
 final class NotchWindowController: NSWindowController {
     private(set) var isPreviewVisible = false
+    private(set) var isExpanded = false
     private(set) var statusMessage = "Preview hidden. Requires a built-in display with a physical notch."
 
     private let displays: @MainActor () -> [DisplayGeometry]
@@ -53,23 +54,35 @@ final class NotchWindowController: NSWindowController {
     }
 
     func showPreview() {
-        switch DisplayGeometry.previewPlacement(in: displays()) {
-        case .success(let placement):
-            let panel = window ?? makePanel(frame: placement.frame)
-            panel.setFrame(placement.frame, display: true)
-            panel.orderFrontRegardless()
-            isPreviewVisible = true
-            statusMessage = "Notch preview shown on \(placement.displayName)."
-        case .failure(let reason):
-            hidePreview()
-            statusMessage = reason.message
-        }
+        presentPreview(isExpanded: isExpanded)
+    }
+
+    func toggleExpansion() {
+        guard isPreviewVisible else { return }
+        presentPreview(isExpanded: !isExpanded)
     }
 
     func hidePreview() {
         window?.orderOut(nil)
         isPreviewVisible = false
+        isExpanded = false
         statusMessage = "Notch preview hidden."
+    }
+
+    private func presentPreview(isExpanded: Bool) {
+        switch DisplayGeometry.previewPlacement(in: displays(), isExpanded: isExpanded) {
+        case .success(let placement):
+            let panel = window ?? makePanel(frame: placement.frame)
+            panel.setFrame(placement.frame, display: true, animate: false)
+            panel.orderFrontRegardless()
+            isPreviewVisible = true
+            self.isExpanded = isExpanded
+            let previewName = isExpanded ? "Expanded notch preview" : "Notch preview"
+            statusMessage = "\(previewName) shown on \(placement.displayName)."
+        case .failure(let reason):
+            hidePreview()
+            statusMessage = reason.message
+        }
     }
 
     private func makePanel(frame: CGRect) -> NSPanel {

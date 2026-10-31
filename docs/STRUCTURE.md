@@ -1,6 +1,6 @@
 # Repository file map
 
-This is the foundation and static preview file layout. The native Xcode project has one macOS application target and one focused Swift Testing target. There are no third-party dependencies or packages.
+This is the foundation and manual preview file layout. The native Xcode project has one macOS application target and one focused Swift Testing target. There are no third-party dependencies or packages.
 
 ```text
 NotchMaster/
@@ -74,10 +74,10 @@ The following names describe the wider plan. Only the Swift files shown in the t
 | :--- | :--- |
 | `Sources/App/NotchMasterApp.swift` | App entry point and Settings scene. |
 | `Sources/App/AppDependencies.swift` | Compose and retain services. |
-| `Sources/UI/AppShellView.swift` | Verification window and temporary Show/Hide Notch Preview control. |
+| `Sources/UI/AppShellView.swift` | Verification window and temporary Show/Hide Notch Preview and Expand/Collapse controls. |
 | `Sources/Core/Plugins/PluginRegistry.swift` | Plugin identities, lifecycle, and enabled state. |
 | `Sources/Core/Windowing/NotchWindowController.swift` | Implemented passive AppKit panel ownership, presentation, and display/sleep handling. |
-| `Sources/Core/Windowing/DisplayGeometry.swift` | Implemented built-in display selection and validated static preview geometry. |
+| `Sources/Core/Windowing/DisplayGeometry.swift` | Implemented built-in display selection and validated compact and expanded preview geometry. |
 | `Sources/Core/Settings/PreferencesStore.swift` | Validated local preferences and persistence. |
 | `Sources/Core/Services/LoginItemService.swift` | Launch-at-login status and registration. |
 | `Sources/Core/Services/EntitlementService.swift` | Verified Pro access and purchase restoration. |
@@ -91,7 +91,7 @@ The following names describe the wider plan. Only the Swift files shown in the t
 | `Sources/UI/Settings/ProSyncSettingsView.swift` | Upgrade, account, and sync states. |
 | `Sources/UI/Settings/ProUpgradeCard.swift` | Native purchase presentation. |
 | `Sources/UI/Settings/AboutSettingsView.swift` | Bundle version and project information. |
-| `Sources/UI/Notch/NotchView.swift` | Implemented black compact surface; expansion remains future work. |
+| `Sources/UI/Notch/NotchView.swift` | Implemented black surface shared by compact and expanded previews. |
 | `Sources/UI/Materials/NotchMaterial.swift` | Accessible surface and effect composition. |
 
 The Xcode project, minimal test target, asset catalog, and shared build settings are included in Phase 1. Do not add empty Swift files to imply that future components already exist.

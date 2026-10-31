@@ -62,6 +62,70 @@ struct DisplayGeometryTests {
         #expect(placement.frame == CGRect(x: 740, y: 1060, width: 220, height: 40))
     }
 
+    @Test(
+        arguments: [CGPoint.zero, CGPoint(x: -2100, y: 700), CGPoint(x: 1800, y: -1200)],
+        [CGFloat(1), CGFloat(2)]
+    )
+    func expandedPreviewSurroundsReportedNotch(origin: CGPoint, scale: CGFloat) throws {
+        var display = DisplayFixture(origin: origin)
+        display.scale = scale
+        display.safeAreaTop = 40
+        display.left = CGRect(x: origin.x, y: origin.y + 1060, width: 740, height: 40)
+        display.right = CGRect(x: origin.x + 960, y: origin.y + 1060, width: 740, height: 40)
+        var external = DisplayFixture()
+        external.isBuiltIn = false
+        let displays = [external.geometry, display.geometry]
+        let compact = try DisplayGeometry.previewPlacement(in: displays).get()
+
+        let expanded = try DisplayGeometry.previewPlacement(in: displays, isExpanded: true).get()
+
+        #expect(expanded.displayName == display.name)
+        #expect(expanded.frame == CGRect(x: origin.x + 660, y: origin.y + 980, width: 380, height: 120))
+        #expect(expanded.frame.midX == compact.frame.midX)
+        #expect(expanded.frame.maxY == display.frame.maxY)
+        #expect(expanded.frame.minX < compact.frame.minX)
+        #expect(expanded.frame.maxX > compact.frame.maxX)
+        #expect(expanded.frame.minY < compact.frame.minY)
+        #expect(expanded.frame.contains(compact.frame))
+        #expect(display.frame.contains(expanded.frame))
+    }
+
+    @Test(arguments: [CGFloat(380), CGFloat(420)])
+    func expandedPreviewNeverNarrowsPhysicalNotch(notchWidth: CGFloat) throws {
+        var display = DisplayFixture()
+        let sideWidth = (display.frame.width - notchWidth) / 2
+        display.left = CGRect(x: 0, y: 1068, width: sideWidth, height: 32)
+        display.right = CGRect(x: sideWidth + notchWidth, y: 1068, width: sideWidth, height: 32)
+        let compact = try DisplayGeometry.previewPlacement(in: [display.geometry]).get()
+
+        let expanded = try DisplayGeometry.previewPlacement(in: [display.geometry], isExpanded: true).get()
+
+        #expect(expanded.frame.width == notchWidth)
+        #expect(expanded.frame.height == 120)
+        #expect(expanded.frame.midX == compact.frame.midX)
+        #expect(expanded.frame.maxY == display.frame.maxY)
+        #expect(expanded.frame.contains(compact.frame))
+        #expect(display.frame.contains(expanded.frame))
+    }
+
+    @Test(arguments: [CGPoint.zero, CGPoint(x: -2100, y: 700)])
+    func expandedPreviewClampsExtensionsWhileStayingCenteredOnNotch(origin: CGPoint) throws {
+        var display = DisplayFixture(origin: origin)
+        display.frame.size = CGSize(width: 400, height: 100)
+        display.left = CGRect(x: origin.x, y: origin.y + 68, width: 170, height: 32)
+        display.right = CGRect(x: origin.x + 350, y: origin.y + 68, width: 50, height: 32)
+        let compact = try DisplayGeometry.previewPlacement(in: [display.geometry]).get()
+
+        let expanded = try DisplayGeometry.previewPlacement(in: [display.geometry], isExpanded: true).get()
+
+        #expect(expanded.frame == CGRect(x: origin.x + 120, y: origin.y, width: 280, height: 100))
+        #expect(expanded.frame.midX == compact.frame.midX)
+        #expect(expanded.frame.midX != display.frame.midX)
+        #expect(expanded.frame.maxY == display.frame.maxY)
+        #expect(expanded.frame.contains(compact.frame))
+        #expect(display.frame.contains(expanded.frame))
+    }
+
     @Test
     func acceptsDisplayWithoutRoomForVisualExtensions() throws {
         var display = DisplayFixture()
@@ -75,29 +139,33 @@ struct DisplayGeometryTests {
         #expect(display.frame.contains(placement.frame))
     }
 
-    @Test
-    func rejectsExternalOnlyAndAmbiguousDisplays() {
+    @Test(arguments: [false, true])
+    func rejectsExternalOnlyAndAmbiguousDisplays(isExpanded: Bool) {
         var external = DisplayFixture()
         external.isBuiltIn = false
-        #expect(DisplayGeometry.previewPlacement(in: []) == .failure(.noBuiltInDisplay))
-        #expect(DisplayGeometry.previewPlacement(in: [external.geometry]) == .failure(.noBuiltInDisplay))
-        #expect(DisplayGeometry.previewPlacement(in: [DisplayFixture().geometry, DisplayFixture().geometry])
+        #expect(DisplayGeometry.previewPlacement(in: [], isExpanded: isExpanded) == .failure(.noBuiltInDisplay))
+        #expect(DisplayGeometry.previewPlacement(in: [external.geometry], isExpanded: isExpanded)
+            == .failure(.noBuiltInDisplay))
+        #expect(DisplayGeometry.previewPlacement(
+            in: [DisplayFixture().geometry, DisplayFixture().geometry], isExpanded: isExpanded
+        )
             == .failure(.ambiguousBuiltInDisplay))
     }
 
-    @Test
-    func rejectsInactiveMirroredAndUnnotchedDisplays() {
+    @Test(arguments: [false, true])
+    func rejectsInactiveMirroredAndUnnotchedDisplays(isExpanded: Bool) {
         var display = DisplayFixture()
         display.isActive = false
-        #expect(DisplayGeometry.previewPlacement(in: [display.geometry]) == .failure(.inactiveBuiltInDisplay))
+        #expect(DisplayGeometry.previewPlacement(in: [display.geometry], isExpanded: isExpanded)
+            == .failure(.inactiveBuiltInDisplay))
         display.isActive = true
         display.isMirrored = true
-        #expect(DisplayGeometry.previewPlacement(in: [display.geometry]) == .failure(.mirroredDisplay))
+        #expect(DisplayGeometry.previewPlacement(in: [display.geometry], isExpanded: isExpanded) == .failure(.mirroredDisplay))
         display.isMirrored = false
         display.safeAreaTop = 0
         display.left = nil
         display.right = nil
-        #expect(DisplayGeometry.previewPlacement(in: [display.geometry]) == .failure(.noNotch))
+        #expect(DisplayGeometry.previewPlacement(in: [display.geometry], isExpanded: isExpanded) == .failure(.noNotch))
     }
 
     enum InvalidGeometry: CaseIterable {
@@ -106,8 +174,8 @@ struct DisplayGeometryTests {
         case nonFiniteFrame, negativeFrame, excessiveTop, invalidScale, nonFiniteScale
     }
 
-    @Test(arguments: InvalidGeometry.allCases)
-    func rejectsIncompleteOrInconsistentGeometry(_ invalid: InvalidGeometry) {
+    @Test(arguments: InvalidGeometry.allCases, [false, true])
+    func rejectsIncompleteOrInconsistentGeometry(_ invalid: InvalidGeometry, isExpanded: Bool) {
         var display = DisplayFixture()
         switch invalid {
         case .missingLeft:
@@ -142,6 +210,6 @@ struct DisplayGeometryTests {
             display.scale = .infinity
         }
 
-        #expect(DisplayGeometry.previewPlacement(in: [display.geometry]) == .failure(.invalidGeometry))
+        #expect(DisplayGeometry.previewPlacement(in: [display.geometry], isExpanded: isExpanded) == .failure(.invalidGeometry))
     }
 }

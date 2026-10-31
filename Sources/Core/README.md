@@ -1,11 +1,11 @@
 # Core
 
-Owns application state and logic. `Settings/PreferencesStore.swift` is a main-actor observable store with injected `UserDefaults`, validated expansion duration, and a computed inverse speed value. `Windowing/DisplayGeometry.swift` validates built-in notch geometry from public display APIs. `Windowing/NotchWindowController.swift` owns the passive preview panel, observable visibility/status, and display/sleep handling, with injected display and content providers.
+Owns application state and logic. `Settings/PreferencesStore.swift` is a main-actor observable store with injected `UserDefaults`, validated expansion duration, and a computed inverse speed value. `Windowing/DisplayGeometry.swift` validates built-in notch geometry from public display APIs and derives compact and expanded frames. `Windowing/NotchWindowController.swift` owns the passive preview panel, observable visibility/expansion/status, and display/sleep handling, with injected display and content providers.
 
 Further planned responsibilities:
 
 - Plugin registration, stable identities, lifecycle, and enablement state.
-- Interactive notch window coordination beyond the static preview.
+- Interactive notch window coordination beyond the manual preview.
 - Additional local preferences and validated settings updates.
 - Login-item integration, purchase entitlements, and optional sync services.
 - Explicit capability and error states exposed to the interface.

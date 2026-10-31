@@ -33,7 +33,10 @@ struct DisplayGeometry {
         }
     }
 
-    static func previewPlacement(in displays: [DisplayGeometry]) -> Result<NotchPreviewPlacement, NotchPreviewUnavailableReason> {
+    static func previewPlacement(
+        in displays: [DisplayGeometry],
+        isExpanded: Bool = false
+    ) -> Result<NotchPreviewPlacement, NotchPreviewUnavailableReason> {
         let builtInDisplays = displays.filter(\.isBuiltIn)
         guard !builtInDisplays.isEmpty else { return .failure(.noBuiltInDisplay) }
         guard builtInDisplays.count == 1, let display = builtInDisplays.first else {
@@ -41,10 +44,10 @@ struct DisplayGeometry {
         }
         guard display.isActive else { return .failure(.inactiveBuiltInDisplay) }
         guard !display.isMirrored else { return .failure(.mirroredDisplay) }
-        return display.previewPlacement()
+        return display.previewPlacement(isExpanded: isExpanded)
     }
 
-    private func previewPlacement() -> Result<NotchPreviewPlacement, NotchPreviewUnavailableReason> {
+    private func previewPlacement(isExpanded: Bool) -> Result<NotchPreviewPlacement, NotchPreviewUnavailableReason> {
         guard safeAreaTop.isFinite, safeAreaTop >= 0 else { return .failure(.invalidGeometry) }
         guard safeAreaTop > 0 else { return .failure(.noNotch) }
         guard Self.isValid(frame), safeAreaTop < frame.height,
@@ -67,12 +70,31 @@ struct DisplayGeometry {
             return .failure(.invalidGeometry)
         }
 
-        let previewFrame = CGRect(
+        let compactFrame = CGRect(
             x: left.maxX,
             y: safeTop,
             width: right.minX - left.maxX,
             height: safeAreaTop
         )
+        guard Self.isValid(compactFrame), frame.contains(compactFrame) else {
+            return .failure(.invalidGeometry)
+        }
+
+        var previewFrame = compactFrame
+        if isExpanded {
+            let sideExtension = min(
+                max(0, (380 - compactFrame.width) / 2),
+                compactFrame.minX - frame.minX,
+                frame.maxX - compactFrame.maxX
+            )
+            let bottomExtension = min(max(0, 120 - compactFrame.height), compactFrame.minY - frame.minY)
+            previewFrame = CGRect(
+                x: compactFrame.minX - sideExtension,
+                y: compactFrame.minY - bottomExtension,
+                width: compactFrame.width + 2 * sideExtension,
+                height: compactFrame.height + bottomExtension
+            )
+        }
         guard Self.isValid(previewFrame), frame.contains(previewFrame) else {
             return .failure(.invalidGeometry)
         }

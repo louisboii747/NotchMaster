@@ -10,11 +10,16 @@ struct AppShellView: View {
                 .font(.largeTitle)
             Text("Foundation build")
                 .font(.headline)
-            Text("A static notch preview and one local preference.")
+            Text("A manually expandable notch preview and one local preference.")
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             Button(notchWindowController.isPreviewVisible ? "Hide Notch Preview" : "Show Notch Preview") {
                 notchWindowController.togglePreview()
+            }
+            if notchWindowController.isPreviewVisible {
+                Button(notchWindowController.isExpanded ? "Collapse" : "Expand") {
+                    notchWindowController.toggleExpansion()
+                }
             }
             Text(notchWindowController.statusMessage)
                 .font(.callout)
