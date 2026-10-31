@@ -8,7 +8,9 @@ final class AppDependencies {
 
     init(defaults: UserDefaults = .standard) {
         preferences = PreferencesStore(defaults: defaults)
-        notchWindowController = NotchWindowController {
+        notchWindowController = NotchWindowController(expansionDuration: { [preferences] in
+            preferences.expansionDuration
+        }) {
             NSHostingView(rootView: NotchView())
         }
     }

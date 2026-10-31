@@ -32,7 +32,7 @@
   <a href="#availability"><img src="docs/assets/app-store-soon.svg" width="220" height="64" alt="Planned for the Mac App Store; no listing yet"></a>
 </p>
 
-> **Prototype build.** The app opens a verification window with temporary Show/Hide Notch Preview and Expand/Collapse controls and native Settings with one persisted expansion speed preference. The preview is a passive black surface around a supported built-in physical notch. Expansion is manual and immediate; hover interaction, animations, and the plugin SDK are not implemented. Features below describe the product plan. NotchMaster is a working title.
+> **Prototype build.** The app opens a verification window with temporary Show/Hide Notch Preview and Expand/Collapse controls and native Settings with one persisted expansion speed preference. The preview is a passive black surface around a supported built-in physical notch. Manual expansion and collapse use native AppKit animations at the current expansion speed, with immediate transitions when Reduce Motion is enabled. Hover interaction and the plugin SDK are not implemented. Features below describe the product plan. NotchMaster is a working title.
 
 ## Features
 
@@ -98,7 +98,9 @@ xcodebuild -project NotchMaster.xcodeproj -scheme NotchMaster -configuration Deb
 xcodebuild -project NotchMaster.xcodeproj -scheme NotchMaster -configuration Debug -destination 'platform=macOS,arch=arm64' test
 ```
 
-The project uses local ad hoc signing without a development team. Distribution signing remains undecided. Run the app from Xcode and use Show Notch Preview, then Expand and Collapse in the verification window. Expansion resizes the same black panel around and below the reported physical notch, keeping its top aligned with the display. Collapse restores the exact compact frame. The preview starts hidden, does not take keyboard focus, and passes mouse events through. Unsupported, inactive, or mirrored built-in displays produce an explanatory message without showing a panel. Display changes revalidate placement; hiding, unsupported geometry, or sleep resets expansion. After hiding, the preview must be explicitly shown again and starts compact. Use Open Settings or Command-comma to edit the preference; immediate resizing does not use expansion speed.
+The project uses local ad hoc signing without a development team. Distribution signing remains undecided. Run the app from Xcode and use Show Notch Preview, then Expand and Collapse in the verification window. Expansion animates the same black panel around and below the reported physical notch, keeping its top edge and horizontal centre fixed. Collapse restores the exact compact frame. Each transition reads the latest expansion duration from Settings. Rapid reversals stop the previous animation and continue from the current size. Reduce Motion applies the target immediately, including when enabled during an animation.
+
+The preview starts hidden, does not take keyboard focus, and passes mouse events through. Initial presentation and display changes apply validated geometry immediately. Unsupported, inactive, or mirrored built-in displays produce an explanatory message without showing a panel. Display changes cancel any animation and revalidate placement; hiding, unsupported geometry, or sleep resets expansion. After hiding, the preview must be explicitly shown again and starts compact. Use Open Settings or Command-comma to edit expansion speed, then alternate Expand and Collapse to check the new duration without restarting. Physical notch alignment, animation appearance, Spaces, and full-screen interaction still need manual hardware testing.
 
 | Path | Purpose |
 | :--- | :--- |

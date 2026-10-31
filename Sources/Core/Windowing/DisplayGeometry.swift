@@ -1,7 +1,7 @@
 import AppKit
 import CoreGraphics
 
-struct DisplayGeometry {
+struct DisplayGeometry: Equatable {
     let name: String
     let frame: CGRect
     let safeAreaTop: CGFloat

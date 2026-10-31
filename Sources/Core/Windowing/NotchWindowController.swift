@@ -10,17 +10,25 @@ final class NotchWindowController: NSWindowController {
 
     private let displays: @MainActor () -> [DisplayGeometry]
     private let makeContentView: @MainActor () -> NSView
+    private let expansionDuration: @MainActor () -> TimeInterval
+    private let reduceMotion: @MainActor () -> Bool
     private let notificationCenter: NotificationCenter
     private let workspaceNotificationCenter: NotificationCenter
+    private var presentedDisplay: DisplayGeometry?
+    @ObservationIgnored private(set) var frameAnimation: NotchFrameAnimation?
 
     init(
         displays: @escaping @MainActor () -> [DisplayGeometry] = DisplayGeometry.current,
         notificationCenter: NotificationCenter = .default,
         workspaceNotificationCenter: NotificationCenter = NSWorkspace.shared.notificationCenter,
+        expansionDuration: @escaping @MainActor () -> TimeInterval = { PreferencesStore.defaultExpansionDuration },
+        reduceMotion: @escaping @MainActor () -> Bool = { NSWorkspace.shared.accessibilityDisplayShouldReduceMotion },
         makeContentView: @escaping @MainActor () -> NSView
     ) {
         self.displays = displays
         self.makeContentView = makeContentView
+        self.expansionDuration = expansionDuration
+        self.reduceMotion = reduceMotion
         self.notificationCenter = notificationCenter
         self.workspaceNotificationCenter = workspaceNotificationCenter
         super.init(window: nil)
@@ -33,6 +41,12 @@ final class NotchWindowController: NSWindowController {
         for name in [NSWorkspace.willSleepNotification, NSWorkspace.screensDidSleepNotification] {
             workspaceNotificationCenter.addObserver(self, selector: #selector(sleepStarted), name: name, object: nil)
         }
+        workspaceNotificationCenter.addObserver(
+            self,
+            selector: #selector(accessibilityDisplayOptionsChanged),
+            name: NSWorkspace.accessibilityDisplayOptionsDidChangeNotification,
+            object: nil
+        )
     }
 
     required init?(coder: NSCoder) {
@@ -42,6 +56,7 @@ final class NotchWindowController: NSWindowController {
     isolated deinit {
         notificationCenter.removeObserver(self)
         workspaceNotificationCenter.removeObserver(self)
+        frameAnimation?.stop()
         window?.close()
     }
 
@@ -59,21 +74,38 @@ final class NotchWindowController: NSWindowController {
 
     func toggleExpansion() {
         guard isPreviewVisible else { return }
-        presentPreview(isExpanded: !isExpanded)
+        presentPreview(isExpanded: !isExpanded, animated: true)
     }
 
     func hidePreview() {
+        cancelFrameAnimation()
         window?.orderOut(nil)
+        presentedDisplay = nil
         isPreviewVisible = false
         isExpanded = false
         statusMessage = "Notch preview hidden."
     }
 
-    private func presentPreview(isExpanded: Bool) {
-        switch DisplayGeometry.previewPlacement(in: displays(), isExpanded: isExpanded) {
+    private func presentPreview(isExpanded: Bool, animated: Bool = false) {
+        cancelFrameAnimation()
+        let currentDisplays = displays()
+        switch DisplayGeometry.previewPlacement(in: currentDisplays, isExpanded: isExpanded) {
         case .success(let placement):
             let panel = window ?? makePanel(frame: placement.frame)
-            panel.setFrame(placement.frame, display: true, animate: false)
+            let display = currentDisplays.first(where: \.isBuiltIn)
+            if animated, isPreviewVisible, display == presentedDisplay,
+               !reduceMotion(), panel.frame != placement.frame {
+                let animation = NotchFrameAnimation(
+                    panel: panel,
+                    targetFrame: placement.frame,
+                    duration: expansionDuration()
+                )
+                frameAnimation = animation
+                animation.start()
+            } else {
+                panel.setFrame(placement.frame, display: true, animate: false)
+            }
+            presentedDisplay = display
             panel.orderFrontRegardless()
             isPreviewVisible = true
             self.isExpanded = isExpanded
@@ -83,6 +115,11 @@ final class NotchWindowController: NSWindowController {
             hidePreview()
             statusMessage = reason.message
         }
+    }
+
+    private func cancelFrameAnimation() {
+        frameAnimation?.stop()
+        frameAnimation = nil
     }
 
     private func makePanel(frame: CGRect) -> NSPanel {
@@ -116,6 +153,56 @@ final class NotchWindowController: NSWindowController {
     @objc private func sleepStarted(_ notification: Notification) {
         guard isPreviewVisible else { return }
         hidePreview()
+    }
+
+    @objc private func accessibilityDisplayOptionsChanged(_ notification: Notification) {
+        guard isPreviewVisible, reduceMotion() else { return }
+        presentPreview(isExpanded: isExpanded)
+    }
+}
+
+final class NotchFrameAnimation: NSAnimation {
+    private let updateFrame: @MainActor @Sendable (CGFloat) -> Void
+
+    @MainActor
+    init(panel: NSWindow, targetFrame: CGRect, duration: TimeInterval) {
+        let startFrame = panel.frame
+        updateFrame = { [weak panel] progress in
+            let width = startFrame.width + (targetFrame.width - startFrame.width) * progress
+            let height = startFrame.height + (targetFrame.height - startFrame.height) * progress
+            let size = CGSize(
+                width: targetFrame.width + 2 * ((width - targetFrame.width) / 2).rounded(),
+                height: targetFrame.height + (height - targetFrame.height).rounded()
+            )
+            let frame = progress >= 1 ? targetFrame : CGRect(
+                x: targetFrame.midX - size.width / 2,
+                y: targetFrame.maxY - size.height,
+                width: size.width,
+                height: size.height
+            )
+            panel?.setFrame(frame, display: true, animate: false)
+        }
+        super.init(duration: duration, animationCurve: .easeInOut)
+        animationBlockingMode = .nonblocking
+        frameRate = 60
+    }
+
+    required init?(coder: NSCoder) {
+        nil
+    }
+
+    override var currentProgress: NSAnimation.Progress {
+        didSet {
+            let progress = CGFloat(currentValue)
+            let updateFrame = updateFrame
+            MainActor.assumeIsolated {
+                updateFrame(progress)
+            }
+        }
+    }
+
+    override var runLoopModesForAnimating: [RunLoop.Mode]? {
+        [.common]
     }
 }
 
