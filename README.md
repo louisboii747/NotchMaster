@@ -5,22 +5,25 @@
 <h1 align="center">NotchMaster</h1>
 
 <h3 align="center">
-  An expandable, feature rich notch app with plugin support for your Apple Silicon Mac.
+  An expandable notch utility for Apple Silicon Macs, built with SwiftUI and AppKit. Plugin support is planned.
 </h3>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/status-foundation-EE5836?style=flat-square" alt="Foundation build">
+  <img src="https://img.shields.io/badge/status-prototype-EE5836?style=flat-square" alt="Early prototype">
   <img src="https://img.shields.io/badge/platform-macOS-20201D?style=flat-square&amp;logo=apple&amp;logoColor=white" alt="For macOS">
   <img src="https://img.shields.io/badge/Swift-6-20201D?style=flat-square&amp;logo=swift&amp;logoColor=white" alt="Language: Swift 6">
-  <img src="https://img.shields.io/badge/UI-SwiftUI%20%2B%20AppKit-20201D?style=flat-square" alt="Planned interface: SwiftUI and AppKit">
+  <img src="https://img.shields.io/badge/UI-SwiftUI%20%2B%20AppKit-20201D?style=flat-square" alt="SwiftUI and AppKit">
   <a href="LICENSE"><img src="https://img.shields.io/badge/licence-MIT-20201D?style=flat-square" alt="MIT licence"></a>
 </p>
 
 <p align="center">
   <a href="#features">Features</a> ·
   <a href="#free--pro">Free &amp; Pro</a> ·
+  <a href="#compatibility">Compatibility</a> ·
+  <a href="#availability">Availability</a> ·
   <a href="#development">Development</a> ·
-  <a href="#how-to-build-plugins">Plugins</a> ·
+  <a href="#plugin-development">Plugins</a> ·
+  <a href="#follow-development">Follow development</a> ·
   <a href="#support">Support</a>
 </p>
 
@@ -28,61 +31,70 @@
   <img src="docs/assets/hero.png" width="100%" alt="NotchMaster. Your Mac's notch, now useful. A macOS utility in development. Concept artwork of a notch panel with playback, timer, and activity icons.">
 </p>
 
+<p align="center"><sub>Concept artwork showing planned controls; not a screenshot of the current prototype.</sub></p>
+
 <p align="center">
   <a href="#availability"><img src="docs/assets/app-store-soon.svg" width="220" height="64" alt="Planned for the Mac App Store; no listing yet"></a>
 </p>
 
-> **Prototype build.** The app opens a verification window with temporary Show/Hide Notch Preview and Expand/Collapse controls and native Settings with one persisted expansion speed preference. The preview is a passive black surface around a supported built-in physical notch. Hovering near the notch expands it; leaving the expanded region collapses it after a short delay. Transitions use native AppKit animation at the current expansion speed, with immediate resizing when Reduce Motion is enabled. Hover transitions request subtle native trackpad haptics when macOS permits. The plugin SDK is not implemented. Features below describe the product plan. NotchMaster is a working title.
+> **Early prototype — not yet released.** On a supported built-in MacBook notch, NotchMaster currently offers a passive black notch preview, hover expansion and delayed collapse, adjustable animation speed, Reduce Motion support, and optional trackpad haptic requests. A temporary verification window is used to test these interactions. There are no functional notch widgets, downloadable release, or plugin SDK yet. The hero artwork and feature plans below show the intended direction, not functionality already shipped.
 
 ## Features
 
-NotchMaster is designed to bring Dynamic Island-style interactions to the Mac. The hub will sit behind the physical MacBook notch and expand to show controls and information from the plugins you enable.
+NotchMaster aims to turn the MacBook notch into a useful, expandable hub. Development is incremental: each interaction is implemented and tested before larger features are added.
 
-- Compact and expanded views for each plugin.
-- Native settings for launch at login, expansion speed, and plugin controls.
-- Optional Metal border effects with accessibility fallbacks.
-- Local preferences, with optional iCloud sync through Pro.
-- Fake notch implementation for Apple Silicon Macs without a physical notch.
+**Working in the current prototype**
+
+- Compact black notch preview on supported built-in displays, with hover expansion and delayed collapse.
+- Native AppKit animation, plus an expansion-speed preference saved in Settings.
+- Reduce Motion support and optional native trackpad haptic requests on hover transitions.
+- Temporary Show/Hide and Expand/Collapse controls for testing.
+
+**Planned, not implemented yet**
+
+- Compact and expanded plugin views with useful controls and information.
+- A plugin registry and settings to enable or disable plugins.
+- Launch at Login, optional Metal border effects, and additional accessibility options.
+- A virtual notch for Apple Silicon Macs without a physical display notch.
+- Optional iCloud preference and layout sync as part of a potential Pro edition.
 
 ## Free & Pro
 
-NotchMaster keeps the core free, but offers iCloud sync and additional features as a Pro upgrade through the Mac App Store. Pricing and plugin delivery, and some Pro features are still undecided.
+The intended model is a useful free core, with optional Pro features distributed through the Mac App Store. **No Pro edition, pricing, or purchase flow is available yet.** This is a proposed feature split, not a list of shipped entitlements.
 
-| Feature | Free | Pro |
+| Planned capability | Free (proposed) | Pro (proposed) |
 | :--- | :--- | :--- |
-| Expandable notch with extensive controls | Included | Included |
-| Now playing screensaver | Not Included | Included |
-| Native settings and local preferences | Included | Included |
-| Plugin registry and enable/disable controls | Included | Included |
-| Expansion speed and Metal border effects | Included | Included |
-| Community plugins | Planned; packaging undecided | App Store delivery under review |
-| iCloud preference and layout sync | Not included | Included |
-| Purchase restoration and sync controls | Not applicable | Included |
+| Expandable notch and core controls | Planned | Included |
+| Native settings and local preferences | Planned | Included |
+| Plugin registry and enable/disable controls | Planned | Included |
+| Expansion speed and optional Metal border effects | Planned | Included |
+| Community plugins | Delivery undecided | App Store compatibility under review |
+| Now Playing screensaver | — | Planned |
+| iCloud preference and layout sync | — | Planned |
+| Purchase restoration and sync controls | — | Planned |
 
-Free features won't require a NotchMaster account. Pro sync would use iCloud and require opt-in. Sync will cover approved preferences and layouts; plugin code, credentials, and private plugin content will stay out of it.
-
-All features are subject to change.
+The free edition is intended to work without a NotchMaster account. Proposed Pro sync would be opt-in and limited to approved preferences and layouts, never plugin code, credentials, or private plugin content. The feature split may change.
 
 ## Compatibility
 
-| Mac | Compatible | Notes
-| :--- | :--- |  :--- |
-| M1 | ✅ Fully Compatible. | Fully compatible to build, test and use NotchMaster.
-| M2 | ✅ Fully Compatible. | Fully compatible to build, test and use NotchMaster.
-| M3 | ✅ Fully Compatible. | Fully compatible to build, test and use NotchMaster.
-| M4 | ✅ Fully Compatible. | Fully compatible to build, test and use NotchMaster.
-| M5 | ✅ Fully Compatible. | Fully compatible to build, test and use NotchMaster.
-| M6 | ✅ Fully Compatible. | Fully compatible to build, test and use NotchMaster.
-| Apple Silicon Mac Mini, Mac, Mac Pro, etc. | ✅ Fully Compatible. | Any Mac without a built in display will have the Virtual Notch implemented. All features are still compatible.
-| Intel x86_64 | ❌ NOT Compatible. | Why? Apple dropped support for Intel Macs with macOS 27, and development of NotchMaster is designed for Apple Silicon Macs only.
+NotchMaster currently targets **Apple Silicon (arm64) and macOS 14.0 or later**. The prototype requires a built-in physical notch with geometry that macOS reports as supported. A deployment target does not mean that every OS version or Mac has been tested.
+
+| Hardware | Current prototype | Future direction |
+| :--- | :--- | :--- |
+| MacBook Air with M5 and a physical notch | Tested during development on macOS 27.2 | Continue hardware and OS validation |
+| Other Apple Silicon MacBooks with a physical notch | Designed to work with supported display geometry; not verified on every model | Broader compatibility testing |
+| Apple Silicon Macs without a physical notch (including desktops) | Not supported by the current notch preview | Virtual notch planned |
+| Intel Macs | Not supported; the Xcode target is arm64-only | No Intel version planned |
+
+The preview validates system-reported display geometry instead of guessing. Mirrored, inactive, or unsupported built-in displays do not show the preview. See [Architecture](docs/ARCHITECTURE.md) for implementation details and test coverage.
+
+## Availability
+
+**There is no public download or Mac App Store listing yet.** NotchMaster is still under development. Developers can [build the prototype from source](#development); a public release and Mac App Store distribution are goals, not announced dates.
 
 ## Development
 
-The prototype uses Swift 6 language mode with complete concurrency checking, SwiftUI presentation, and an AppKit-managed preview panel. The initial deployment target is macOS 14.0. Open `NotchMaster.xcodeproj` in Xcode and select the shared NotchMaster scheme and My Mac destination.
-
-As mentioned in [Compatibility](#compatibility), Intel Macs are **not** supported due to losing support in recent macOS updates, and app development is designed only for Apple's M series SoC processors. The NotchMaster app will **not** build *or* run on **any** x86_64 Mac. **This will not change.**
-
-Ensure Xcode and Git are installed on your Mac, then use these terminal commands to clone and open the NotchMaster repository.
+The repository includes an Xcode project using Swift 6 language mode, SwiftUI, AppKit and complete concurrency checking. Open `NotchMaster.xcodeproj` in Xcode on an Apple Silicon Mac.
 
 ```sh
 git clone https://github.com/louisboii747/NotchMaster.git
@@ -90,41 +102,35 @@ cd NotchMaster
 open NotchMaster.xcodeproj
 ```
 
-
-Build and run the focused preference, geometry, and window-controller tests for Apple Silicon:
+To build and run the focused tests:
 
 ```sh
 xcodebuild -project NotchMaster.xcodeproj -scheme NotchMaster -configuration Debug -destination 'platform=macOS,arch=arm64' build
 xcodebuild -project NotchMaster.xcodeproj -scheme NotchMaster -configuration Debug -destination 'platform=macOS,arch=arm64' test
 ```
 
-The project uses local ad hoc signing without a development team. Distribution signing remains undecided. Run the app from Xcode and use Show Notch Preview, then Expand and Collapse in the verification window. Expansion animates the same black panel around and below the reported physical notch, keeping its top edge and horizontal centre fixed. Collapse restores the exact compact frame. Each transition reads the latest expansion duration from Settings. Rapid reversals stop the previous animation and continue from the current size. Reduce Motion applies the target immediately, including when enabled during an animation.
+The prototype uses local ad hoc signing; distribution signing isn't configured. Its temporary verification window lets you show the notch preview and test expansion, collapse and Settings.
 
-The preview starts hidden, does not take keyboard focus, and passes mouse events through. Initial presentation and display changes apply validated geometry immediately. Unsupported, inactive, or mirrored built-in displays produce an explanatory message without showing a panel. Display changes cancel any animation and revalidate placement; hiding, unsupported geometry, or sleep resets expansion. After hiding, the preview must be explicitly shown again and starts compact. Use Open Settings or Command-comma to edit expansion speed, then alternate Expand and Collapse to check the new duration without restarting. Physical notch alignment, animation appearance, Spaces, and full-screen interaction still need manual hardware testing.
-
-While the preview is shown, move the pointer toward the physical notch from below or either side. The activation region extends 12 points on each side of the compact notch and 10 points below it. The exit region surrounds the expanded frame with an 8-point margin. Both regions stay within the built-in display. Leaving the exit region starts a 180 ms collapse delay; returning cancels it. Cursor sampling runs at 30 Hz, including while another app is focused, without intercepting input or requesting Accessibility or Input Monitoring permissions. Sampling and the delay stop when the preview is hidden or unsupported, on sleep, and when its controller is destroyed.
-
-Manual Expand/Collapse cancels pending hover actions and holds the chosen state. A fresh entry into the activation region resumes automatic interaction; if the pointer was already nearby when a manual action occurred, first leave the wider exit region. A stationary pointer at initial presentation or after a display change produces no transition or haptic request.
-
-Each actual hover expansion or delayed collapse requests one immediate `.generic` haptic through `NSHapticFeedbackManager.defaultPerformer`. Repeated polling, cancelled collapses, manual controls and lifecycle changes do not request feedback. AppKit selects the performer using the current input device, accessibility settings and system preferences. Feedback is optional: macOS may suppress it, including when there is no compatible trackpad or no finger touching it. Visual interaction always works independently.
-
-For manual validation on a MacBook with a Force Touch trackpad, show the preview, focus another app, then approach and leave the notch. Check that each transition feels subtle, returning during the collapse delay keeps the panel expanded, and movement near the activation boundary does not chatter. Also test manual overrides, Settings duration changes, Reduce Motion, system haptic preferences, a mouse without haptics, display changes and sleep. Physical feedback, perceived latency, menu-bar interaction, Spaces and full-screen behaviour require hardware testing.
+For detailed hover boundaries, animation behaviour, accessibility, haptics and manual testing, see **[Prototype testing](docs/PROTOTYPE_TESTING.md)**. For implementation details, see [Architecture](docs/ARCHITECTURE.md) and the [file map](docs/STRUCTURE.md).
 
 | Path | Purpose |
 | :--- | :--- |
-| [`Sources/App/`](Sources/App/README.md) | App entry point, scenes, and lifecycle. |
-| [`Sources/Core/`](Sources/Core/README.md) | Plugin registry, window management, and state. |
-| [`Sources/UI/`](Sources/UI/README.md) | Settings, notch views, and materials. |
-| [`docs/`](docs/STRUCTURE.md) | File map, architecture, settings, and plugin notes. |
+| [`Sources/App/`](Sources/App/README.md) | App entry point, scenes and lifecycle. |
+| [`Sources/Core/`](Sources/Core/README.md) | Preferences and window management; plugin infrastructure is planned. |
+| [`Sources/UI/`](Sources/UI/README.md) | Settings and notch presentation. |
+| [`docs/`](docs/STRUCTURE.md) | Architecture, testing notes and future plugin design. |
 
-The source folders contain the foundation, manual notch preview, and ownership notes. The [file map](docs/STRUCTURE.md) separates implemented files from future work; the [architecture](docs/ARCHITECTURE.md) explains startup and data flow.
+## Plugin development
 
-## How to build plugins
+A public plugin SDK, installable plugin format and stable third-party API **do not exist yet**. The [plugin guide](docs/PLUGINS.md) explains the design goals, lifecycle requirements and unresolved distribution decisions; it is not a tutorial for an existing SDK.
 
-The plugin SDK will enter development shortly after NotchMaster has a working, downloadable version. The [plugin guide](docs/PLUGINS.md) records the proposed lifecycle, permissions, and cleanup requirements. Third-party code loading and App Store packaging still need to be decided.
+For now, [open an issue](https://github.com/louisboii747/NotchMaster/issues) explaining the plugin you'd like to build, its compact and expanded views, and any data or permissions it would need.
 
-For now, [open an issue](https://github.com/louisboii747/NotchMaster/issues) describing what your plugin would do, what it should show in each view, and which data or permissions it would need.
+## Follow development
 
+NotchMaster is being developed publicly in small, testable steps. You can **Watch** the [GitHub repository](https://github.com/louisboii747/NotchMaster) for updates, check [Releases](https://github.com/louisboii747/NotchMaster/releases) when builds become available, or browse [Issues](https://github.com/louisboii747/NotchMaster/issues) to suggest improvements and discuss ideas.
+
+There is no beta sign-up or public download yet. When testing opens, details will be posted in the repository.
 
 ## Support
 
