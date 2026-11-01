@@ -1,0 +1,71 @@
+name: macOS CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build and Test (arm64)
+    runs-on: xcode-27
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Build and run tests
+        run: |
+          xcodebuild \
+            -project NotchMaster.xcodeproj \
+            -scheme NotchMaster \
+            -configuration Debug \
+            -destination 'platform=macOS,arch=arm64' \
+            -parallel-testing-enabled NO \
+            -resultBundlePath "$RUNNER_TEMP/NotchMaster.xcresult" \
+            SWIFT_TREAT_WARNINGS_AS_ERRORS=YES \
+            test
+
+      - name: Upload test results on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: notchmaster-xcresult
+          path: ${{ runner.temp }}/NotchMaster.xcresult
+          if-no-files-found: ignore
+          retention-days: 7
+
+  swift-style:
+    name: SwiftLint and SwiftFormat
+    runs-on: xcode-27
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Install SwiftLint
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: "1"
+        run: brew install swiftlint
+
+      - name: Check SwiftLint rules
+        run: swiftlint lint --strict
+
+      - name: Check SwiftFormat rules (no changes)
+        run: |
+          swiftformat --version
+          swiftformat --lint . --config .swiftformat

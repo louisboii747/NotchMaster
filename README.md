@@ -110,6 +110,19 @@ xcodebuild -project NotchMaster.xcodeproj -scheme NotchMaster -configuration Deb
 xcodebuild -project NotchMaster.xcodeproj -scheme NotchMaster -configuration Debug -destination 'platform=macOS,arch=arm64' test
 ```
 
+### Continuous integration
+
+[macOS CI](.github/workflows/macos-ci.yml) runs on pull requests to `main`, pushes to `main`, and manual dispatch. Its separate jobs build and test the arm64 macOS app using Xcode 27 (treating Swift warnings as errors), and check SwiftLint plus SwiftFormat styling. CI does not replace manual physical-notch, haptic, or full-screen testing.
+
+To run the same style checks locally, install the tools with `brew install swiftlint swiftformat` and run:
+
+```sh
+swiftlint lint --strict
+swiftformat --lint .
+```
+
+To apply the configured formatting locally, run `swiftformat .` and review the diff before committing. SwiftLint and SwiftFormat use the deliberately small rule sets in `.swiftlint.yml` and `.swiftformat`; extend these rules incrementally as the codebase develops.
+
 The prototype uses local ad hoc signing; distribution signing isn't configured. Its temporary verification window lets you show the notch preview and test expansion, collapse and Settings.
 
 For live clock behaviour, hover boundaries, animation, accessibility, haptics and manual testing, see **[Prototype testing](docs/PROTOTYPE_TESTING.md)**. For implementation details, see [Architecture](docs/ARCHITECTURE.md) and the [file map](docs/STRUCTURE.md).

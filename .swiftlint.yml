@@ -1,0 +1,18 @@
+# Begin with correctness and whitespace checks; extend deliberately.
+# SwiftLint works alongside SwiftFormat without rewriting source in CI.
+included:
+  - Sources
+  - Tests
+
+only_rules:
+  - closing_brace
+  - comma
+  - colon
+  - force_cast
+  - force_try
+  - opening_brace
+  - return_arrow_whitespace
+  - trailing_newline
+  - trailing_whitespace
+
+reporter: xcode

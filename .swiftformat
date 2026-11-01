@@ -1,0 +1,6 @@
+# SwiftFormat (nicklockwood). Keep the first CI adoption non-disruptive.
+# Formatting is opt-in locally; CI only runs --lint.
+--swiftversion 6
+--indent 4
+--disable all
+--enable trailingSpace,semicolons,spaceAroundParens,spaceInsideParens,spaceAroundBrackets,spaceInsideBrackets,spaceAroundBraces
