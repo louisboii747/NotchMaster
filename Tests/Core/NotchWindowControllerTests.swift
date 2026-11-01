@@ -16,10 +16,50 @@ private final class MotionProviderFixture {
 @MainActor
 struct NotchWindowControllerTests {
     @Test
+    func contentReceivesValidatedCameraHeightAndRefreshesWhenItChanges() throws {
+        let notifications = NotificationCenter()
+        let provider = DisplayProviderFixture()
+        var cameraHeights: [CGFloat] = []
+        let controller = NotchWindowController(
+            displays: { provider.displays },
+            notificationCenter: notifications,
+            reduceMotion: { true }
+        ) { cameraHeight in
+            cameraHeights.append(cameraHeight)
+            return NSView()
+        }
+        defer { controller.hidePreview() }
+        controller.showPreview()
+        let panel = try #require(controller.window)
+        let originalContent = panel.contentView
+        controller.toggleExpansion()
+        controller.hidePreview()
+        controller.showPreview()
+        #expect(cameraHeights == [32])
+        #expect(panel.contentView === originalContent)
+
+        var changedDisplay = DisplayFixture()
+        changedDisplay.safeAreaTop = 40
+        changedDisplay.left = CGRect(x: 0, y: 1060, width: 760, height: 40)
+        changedDisplay.right = CGRect(x: 940, y: 1060, width: 760, height: 40)
+        provider.displays = [changedDisplay.geometry]
+        notifications.post(name: NSApplication.didChangeScreenParametersNotification, object: nil)
+
+        #expect(controller.window === panel)
+        #expect(panel.contentView !== originalContent)
+        #expect(cameraHeights == [32, 40])
+        changedDisplay.isMirrored = true
+        provider.displays = [changedDisplay.geometry]
+        notifications.post(name: NSApplication.didChangeScreenParametersNotification, object: nil)
+        #expect(cameraHeights == [32, 40])
+        #expect(!panel.isVisible)
+    }
+
+    @Test
     func showsAndHidesOnePassivePanelWithoutChangingFocus() throws {
         var contentCreationCount = 0
         let display = DisplayFixture().geometry
-        let controller = NotchWindowController(displays: { [display] }) {
+        let controller = NotchWindowController(displays: { [display] }) { _ in
             contentCreationCount += 1
             return NSView()
         }
@@ -64,7 +104,7 @@ struct NotchWindowControllerTests {
     func expansionReusesPanelAndContentWithoutChangingFocus() throws {
         var contentCreationCount = 0
         let display = DisplayFixture().geometry
-        let controller = NotchWindowController(displays: { [display] }, reduceMotion: { true }) {
+        let controller = NotchWindowController(displays: { [display] }, reduceMotion: { true }) { _ in
             contentCreationCount += 1
             return NSView()
         }
@@ -99,7 +139,7 @@ struct NotchWindowControllerTests {
 
     @Test
     func hidingExpandedPreviewResetsBeforeReuse() throws {
-        let controller = NotchWindowController(displays: { [DisplayFixture().geometry] }) { NSView() }
+        let controller = NotchWindowController(displays: { [DisplayFixture().geometry] }) { _ in NSView() }
         defer { controller.hidePreview() }
         controller.showPreview()
         let panel = try #require(controller.window)
@@ -123,7 +163,7 @@ struct NotchWindowControllerTests {
     @Test
     func unsupportedDisplayReportsReasonWithoutCreatingPanel() {
         var contentCreated = false
-        let controller = NotchWindowController(displays: { [] }) {
+        let controller = NotchWindowController(displays: { [] }) { _ in
             contentCreated = true
             return NSView()
         }
@@ -140,7 +180,7 @@ struct NotchWindowControllerTests {
     func displayChangesRepositionOrHideWithoutReopeningHiddenPreview(isExpanded: Bool) throws {
         let notifications = NotificationCenter()
         let provider = DisplayProviderFixture()
-        let controller = NotchWindowController(displays: { provider.displays }, notificationCenter: notifications) {
+        let controller = NotchWindowController(displays: { provider.displays }, notificationCenter: notifications) { _ in
             NSView()
         }
         defer { controller.hidePreview() }
@@ -180,7 +220,7 @@ struct NotchWindowControllerTests {
     @Test
     func expansionRevalidatesDisplayBeforeResizing() throws {
         let provider = DisplayProviderFixture()
-        let controller = NotchWindowController(displays: { provider.displays }) { NSView() }
+        let controller = NotchWindowController(displays: { provider.displays }) { _ in NSView() }
         controller.showPreview()
         let panel = try #require(controller.window)
         controller.toggleExpansion()
@@ -202,7 +242,7 @@ struct NotchWindowControllerTests {
         let controller = NotchWindowController(
             displays: { [DisplayFixture().geometry] },
             workspaceNotificationCenter: workspaceNotifications
-        ) {
+        ) { _ in
             NSView()
         }
         defer { controller.hidePreview() }
@@ -233,7 +273,7 @@ struct NotchWindowControllerTests {
             notificationCenter: notifications,
             workspaceNotificationCenter: workspaceNotifications,
             reduceMotion: { false }
-        ) {
+        ) { _ in
             NSView()
         }
         controller?.showPreview()
@@ -255,7 +295,7 @@ struct NotchWindowControllerTests {
     @Test(arguments: [CGPoint.zero, CGPoint(x: -2100, y: 700), CGPoint(x: 1800, y: -1200)])
     func animationPreservesNotchAnchorAndUsesEaseInOut(origin: CGPoint) throws {
         let display = DisplayFixture(origin: origin).geometry
-        let controller = NotchWindowController(displays: { [display] }, reduceMotion: { false }) { NSView() }
+        let controller = NotchWindowController(displays: { [display] }, reduceMotion: { false }) { _ in NSView() }
         defer { controller.hidePreview() }
         controller.showPreview()
         let panel = try #require(controller.window)
@@ -295,7 +335,7 @@ struct NotchWindowControllerTests {
             displays: { [DisplayFixture().geometry] },
             expansionDuration: { preferences.expansionDuration },
             reduceMotion: { false }
-        ) { NSView() }
+        ) { _ in NSView() }
         defer { controller.hidePreview() }
         controller.showPreview()
         let panel = try #require(controller.window)
@@ -322,7 +362,7 @@ struct NotchWindowControllerTests {
     @Test
     func rapidAlternatingRequestsKeepOnlyLatestAnimation() throws {
         let display = DisplayFixture().geometry
-        let controller = NotchWindowController(displays: { [display] }, reduceMotion: { false }) { NSView() }
+        let controller = NotchWindowController(displays: { [display] }, reduceMotion: { false }) { _ in NSView() }
         defer { controller.hidePreview() }
         controller.showPreview()
         let panel = try #require(controller.window)
@@ -349,7 +389,7 @@ struct NotchWindowControllerTests {
     @Test
     func reduceMotionImmediatelyAppliesBothTargets() throws {
         let display = DisplayFixture().geometry
-        let controller = NotchWindowController(displays: { [display] }, reduceMotion: { true }) { NSView() }
+        let controller = NotchWindowController(displays: { [display] }, reduceMotion: { true }) { _ in NSView() }
         defer { controller.hidePreview() }
         controller.showPreview()
         let panel = try #require(controller.window)
@@ -371,7 +411,7 @@ struct NotchWindowControllerTests {
             displays: { [display] },
             workspaceNotificationCenter: workspaceNotifications,
             reduceMotion: { motion.reduceMotion }
-        ) { NSView() }
+        ) { _ in NSView() }
         defer { controller.hidePreview() }
         controller.showPreview()
         controller.toggleExpansion()
@@ -399,7 +439,7 @@ struct NotchWindowControllerTests {
             displays: { provider.displays },
             notificationCenter: notifications,
             reduceMotion: { false }
-        ) { NSView() }
+        ) { _ in NSView() }
         defer { controller.hidePreview() }
         controller.showPreview()
         controller.toggleExpansion()
@@ -428,7 +468,7 @@ struct NotchWindowControllerTests {
             displays: { [DisplayFixture().geometry] },
             workspaceNotificationCenter: notifications,
             reduceMotion: { false }
-        ) { NSView() }
+        ) { _ in NSView() }
         defer { controller.hidePreview() }
         controller.showPreview()
         let compactFrame = controller.window?.frame
@@ -449,7 +489,7 @@ struct NotchWindowControllerTests {
     @Test
     func hidingOrLosingValidGeometryCancelsAnimation() throws {
         let provider = DisplayProviderFixture()
-        let controller = NotchWindowController(displays: { provider.displays }, reduceMotion: { false }) { NSView() }
+        let controller = NotchWindowController(displays: { provider.displays }, reduceMotion: { false }) { _ in NSView() }
         defer { controller.hidePreview() }
         controller.showPreview()
         let compactFrame = controller.window?.frame
@@ -487,7 +527,7 @@ struct NotchWindowControllerTests {
             expansionDuration: { 0.15 },
             reduceMotion: { false },
             cursorPosition: { .zero }
-        ) { NSView() }
+        ) { _ in NSView() }
         defer { controller.hidePreview() }
         controller.showPreview()
         let panel = try #require(controller.window)

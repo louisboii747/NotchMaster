@@ -1,6 +1,6 @@
 # Architecture direction
 
-Status: Phase 1 foundation, animated notch preview, and automatic hover interaction with native haptic requests are implemented. The startup, preference, and preview flows below exist; later feature sections record intended boundaries.
+Status: Phase 1 foundation, animated notch preview, automatic hover interaction with native haptic requests, and an expanded live clock and date are implemented. The startup, preference, and preview flows below exist; later feature sections record intended boundaries.
 
 ## Product boundary
 
@@ -10,7 +10,7 @@ The foundation uses one native Xcode application target, Swift 6 language mode w
 
 ## Implemented startup and preference flow
 
-`NotchMasterApp` is the `@main` SwiftUI entry point. It retains `AppDependencies` in `@State`, opens a single verification window, and declares a native `Settings` scene. The composition root creates `PreferencesStore` and `NotchWindowController`. It passes preferences explicitly through `SettingsView` to `GeneralSettingsView` and the controller to `AppShellView`. App injects a duration provider that reads the shared preferences store, plus a content factory that hosts UI's `NotchView`, keeping Core independent of UI view types. No panel is created until Show Notch Preview succeeds.
+`NotchMasterApp` is the `@main` SwiftUI entry point. It retains `AppDependencies` in `@State`, opens a single verification window, and declares a native `Settings` scene. The composition root creates `PreferencesStore` and `NotchWindowController`. It passes preferences explicitly through `SettingsView` to `GeneralSettingsView` and the controller to `AppShellView`. App injects a duration provider that reads the shared preferences store, plus a content factory that accepts the validated camera height and hosts UI's `NotchView`, keeping Core independent of UI view types. No panel is created until Show Notch Preview succeeds.
 
 The store uses Foundation `UserDefaults` for one local duration under `notchExpansionDuration`. It accepts an injected defaults instance so tests can use isolated suites. Missing, malformed, or non-finite values become 0.30 seconds. Finite values are clamped to 0.15–0.60 seconds on load and assignment, and the validated value is persisted. The store does not monitor changes made outside the running app.
 
@@ -38,7 +38,7 @@ Use dependency injection at the App boundary. Keep preferences, OS-reported stat
 
 `DisplayGeometry` selects a single active built-in display using the public Core Graphics display identity, independent of the main or keyboard-focused screen. Mirroring is unsupported. A positive top safe-area inset and consistent auxiliary top-left and top-right rectangles must describe a central gap in global AppKit coordinates. Missing, non-finite, or inconsistent geometry is rejected with a visible explanation, without falling back to guessed coordinates or an external display.
 
-The compact panel spans exactly that reported gap, from the left auxiliary area's right edge to the right auxiliary area's left edge, with no side or bottom extension. Its height is the reported top safe-area inset, with its top at the display's top edge and its bottom at the safe-area boundary. Because the physical notch contains no drawable pixels, toggling the compact preview may produce little or no visible difference. The panel bypasses AppKit's normal visible-frame constraint only after geometry validation so it can occupy the menu-bar region. `NotchView` draws a solid black surface with rounded bottom corners; there are no controls or animations inside it.
+The compact panel spans exactly that reported gap, from the left auxiliary area's right edge to the right auxiliary area's left edge, with no side or bottom extension. Its height is the reported top safe-area inset, with its top at the display's top edge and its bottom at the safe-area boundary. Because the physical notch contains no drawable pixels, toggling the compact preview may produce little or no visible difference. The panel bypasses AppKit's normal visible-frame constraint only after geometry validation so it can occupy the menu-bar region. `NotchView` preserves the solid black surface and its 10-point rounded bottom corners. Compact rendering contains no text.
 
 While the preview is visible, `AppShellView` offers a temporary Expand/Collapse button alongside automatic hover interaction. Expansion targets 380 points wide and 120 points tall, never smaller than the reported notch gap. `DisplayGeometry` caps both side extensions equally to the smaller available side margin and caps the bottom extension to the available display height, preserving the gap's centre and the display's top edge. Collapse restores the exact compact frame. Expansion while hidden has no effect; no plugin content is implemented.
 
@@ -66,6 +66,16 @@ Later interactive work should:
 - Define any future fake-notch behaviour for displays without a notch.
 
 The physical notch contains no drawable pixels. The design must use the surrounding display area rather than assume content can be drawn over the camera housing.
+
+## Expanded clock and date
+
+`NotchView` uses `GeometryReader` to read the existing hosting view's actual dimensions during AppKit resizing. The content factory receives `safeAreaTop` from the same display snapshot that passed `DisplayGeometry.previewPlacement` validation. The controller caches only the camera height used to build the content, reusing that hosting view across transitions and hide/show. If the validated height changes, it rebuilds the content before applying the new frame. There is no UI-owned expansion state, second animation, display polling, or guessed camera size.
+
+Below that camera height, `NotchClockView` centres a native title-sized hour and minute above a secondary subheadline-sized weekday, abbreviated month and day. SwiftUI `Text` uses Foundation date format styles with localized field ordering and the system's hour-cycle preference. A `TimelineView(.everyMinute)` supplies the current date at minute boundaries, covering time and date rollover without a custom clock timer. The compact view does not instantiate the timeline.
+
+The text retains its natural size. A SwiftUI `visualEffect` measures it without storing layout state and computes opacity from the remaining horizontal and vertical room: 16 points on each side, 8 points above and below, then an 8-point fade range. Content is fully transparent until all text and margins fit below the camera. Insufficient space keeps it hidden. Because opacity is a pure function of current dimensions, a reversal follows the same reveal path immediately. AppKit remains responsible for panel animation and Reduce Motion; immediate target resizing also immediately resolves content visibility. The black shape and corners are unchanged.
+
+Focused rendering and native hosting-view checks, plus remaining hardware checks, are recorded in [prototype testing](PROTOTYPE_TESTING.md).
 
 ## Hover and haptic feedback
 

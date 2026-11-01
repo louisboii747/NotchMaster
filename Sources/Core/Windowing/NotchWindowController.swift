@@ -9,7 +9,7 @@ final class NotchWindowController: NSWindowController {
     private(set) var statusMessage = "Preview hidden. Requires a built-in display with a physical notch."
 
     private let displays: @MainActor () -> [DisplayGeometry]
-    private let makeContentView: @MainActor () -> NSView
+    private let makeContentView: @MainActor (CGFloat) -> NSView
     private let expansionDuration: @MainActor () -> TimeInterval
     private let reduceMotion: @MainActor () -> Bool
     private let cursorPosition: @MainActor () -> CGPoint
@@ -18,6 +18,7 @@ final class NotchWindowController: NSWindowController {
     private let notificationCenter: NotificationCenter
     private let workspaceNotificationCenter: NotificationCenter
     private var presentedDisplay: DisplayGeometry?
+    @ObservationIgnored private var contentCameraHeight: CGFloat?
     @ObservationIgnored private(set) var frameAnimation: NotchFrameAnimation?
     @ObservationIgnored private(set) var hoverTimer: Timer?
     @ObservationIgnored private var hoverInteraction: NotchHoverInteraction?
@@ -33,7 +34,7 @@ final class NotchWindowController: NSWindowController {
         performHapticFeedback: @escaping @MainActor () -> Void = {
             NSHapticFeedbackManager.defaultPerformer.perform(.generic, performanceTime: .now)
         },
-        makeContentView: @escaping @MainActor () -> NSView
+        makeContentView: @escaping @MainActor (CGFloat) -> NSView
     ) {
         self.displays = displays
         self.makeContentView = makeContentView
@@ -107,9 +108,13 @@ final class NotchWindowController: NSWindowController {
         let currentDisplays = displays()
         switch DisplayGeometry.previewPlacement(in: currentDisplays, isExpanded: isExpanded) {
         case .success(let placement):
+            guard let display = currentDisplays.first(where: \.isBuiltIn) else { return }
             let panel = window ?? makePanel(frame: placement.frame)
-            let display = currentDisplays.first(where: \.isBuiltIn)
             let displayUnchanged = display == presentedDisplay
+            if contentCameraHeight != display.safeAreaTop {
+                panel.contentView = makeContentView(display.safeAreaTop)
+                contentCameraHeight = display.safeAreaTop
+            }
             let expansionChanged = self.isExpanded != isExpanded
             if animated, isPreviewVisible, displayUnchanged,
                !reduceMotion(), panel.frame != placement.frame {
@@ -201,7 +206,6 @@ final class NotchWindowController: NSWindowController {
         panel.level = .statusBar
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
         panel.animationBehavior = .none
-        panel.contentView = makeContentView()
         window = panel
         return panel
     }

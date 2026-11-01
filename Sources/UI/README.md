@@ -1,6 +1,6 @@
 # UI
 
-Contains SwiftUI presentation. `AppShellView.swift` provides the verification window, temporary Show/Hide Notch Preview and Expand/Collapse controls, and geometry status. `Notch/NotchView.swift` renders the black surface at either panel size. `Settings/SettingsView.swift` with `GeneralSettingsView.swift` provides a native grouped form containing only the functional expansion speed control. Views receive the Core preferences store or preview controller explicitly.
+Contains SwiftUI presentation. `AppShellView.swift` provides the verification window, temporary Show/Hide Notch Preview and Expand/Collapse controls, and geometry status. `Notch/NotchView.swift` renders the black surface and a localized live clock and date below the camera when the panel has room. Content opacity follows the hosting view's actual size; AppKit owns expansion animation. `Settings/SettingsView.swift` with `GeneralSettingsView.swift` provides a native grouped form containing only the functional expansion speed control. Views receive validated camera clearance, the Core preferences store or preview controller explicitly.
 
 Planned responsibilities:
 

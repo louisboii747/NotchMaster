@@ -38,7 +38,7 @@ private final class HoverFixture {
             },
             uptime: uptime ?? { self.time },
             performHapticFeedback: feedback ?? { self.hapticRequests += 1 }
-        ) { NSView() }
+        ) { _ in NSView() }
     }
 
     func poll(_ controller: NotchWindowController, position: CGPoint? = nil, after interval: TimeInterval = 0) {

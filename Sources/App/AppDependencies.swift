@@ -10,8 +10,8 @@ final class AppDependencies {
         preferences = PreferencesStore(defaults: defaults)
         notchWindowController = NotchWindowController(expansionDuration: { [preferences] in
             preferences.expansionDuration
-        }) {
-            NSHostingView(rootView: NotchView())
+        }) { cameraHeight in
+            NSHostingView(rootView: NotchView(cameraHeight: cameraHeight))
         }
     }
 }

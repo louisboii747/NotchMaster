@@ -37,7 +37,7 @@
   <a href="#availability"><img src="docs/assets/app-store-soon.svg" width="220" height="64" alt="Planned for the Mac App Store; no listing yet"></a>
 </p>
 
-> **Early prototype — not yet released.** On a supported built-in MacBook notch, NotchMaster currently offers a passive black notch preview, hover expansion and delayed collapse, adjustable animation speed, Reduce Motion support, and optional trackpad haptic requests. A temporary verification window is used to test these interactions. There are no functional notch widgets, downloadable release, or plugin SDK yet. The hero artwork and feature plans below show the intended direction, not functionality already shipped.
+> **Early prototype, not yet released.** On a supported built-in MacBook notch, NotchMaster currently offers a passive black notch preview with a live local clock and date when expanded, hover expansion and delayed collapse, adjustable animation speed, Reduce Motion support, and optional trackpad haptic requests. A temporary verification window is used to test these interactions. There is no downloadable release or plugin SDK yet. The hero artwork and remaining feature plans below show the intended direction, not functionality already shipped.
 
 ## Features
 
@@ -46,6 +46,7 @@ NotchMaster aims to turn the MacBook notch into a useful, expandable hub. Develo
 **Working in the current prototype**
 
 - Compact black notch preview on supported built-in displays, with hover expansion and delayed collapse.
+- Live local clock and date below the camera when expanded, with localized time and date formatting.
 - Native AppKit animation, plus an expansion-speed preference saved in Settings.
 - Reduce Motion support and optional native trackpad haptic requests on hover transitions.
 - Temporary Show/Hide and Expand/Collapse controls for testing.
@@ -69,9 +70,9 @@ The intended model is a useful free core, with optional Pro features distributed
 | Plugin registry and enable/disable controls | Planned | Included |
 | Expansion speed and optional Metal border effects | Planned | Included |
 | Community plugins | Delivery undecided | App Store compatibility under review |
-| Now Playing screensaver | — | Planned |
-| iCloud preference and layout sync | — | Planned |
-| Purchase restoration and sync controls | — | Planned |
+| Now Playing screensaver | - | Planned |
+| iCloud preference and layout sync | - | Planned |
+| Purchase restoration and sync controls | - | Planned |
 
 The free edition is intended to work without a NotchMaster account. Proposed Pro sync would be opt-in and limited to approved preferences and layouts, never plugin code, credentials, or private plugin content. The feature split may change.
 
@@ -102,7 +103,7 @@ cd NotchMaster
 open NotchMaster.xcodeproj
 ```
 
-To build and run the focused tests:
+Build and run the focused preference, geometry, window-controller, hover, and SwiftUI content tests for Apple Silicon:
 
 ```sh
 xcodebuild -project NotchMaster.xcodeproj -scheme NotchMaster -configuration Debug -destination 'platform=macOS,arch=arm64' build
@@ -111,7 +112,7 @@ xcodebuild -project NotchMaster.xcodeproj -scheme NotchMaster -configuration Deb
 
 The prototype uses local ad hoc signing; distribution signing isn't configured. Its temporary verification window lets you show the notch preview and test expansion, collapse and Settings.
 
-For detailed hover boundaries, animation behaviour, accessibility, haptics and manual testing, see **[Prototype testing](docs/PROTOTYPE_TESTING.md)**. For implementation details, see [Architecture](docs/ARCHITECTURE.md) and the [file map](docs/STRUCTURE.md).
+For live clock behaviour, hover boundaries, animation, accessibility, haptics and manual testing, see **[Prototype testing](docs/PROTOTYPE_TESTING.md)**. For implementation details, see [Architecture](docs/ARCHITECTURE.md) and the [file map](docs/STRUCTURE.md).
 
 | Path | Purpose |
 | :--- | :--- |
