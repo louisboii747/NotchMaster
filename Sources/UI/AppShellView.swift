@@ -2,35 +2,45 @@ import SwiftUI
 
 @MainActor
 struct AppShellView: View {
+    let preferences: PreferencesStore
     let notchWindowController: NotchWindowController
 
     var body: some View {
-        VStack(spacing: 16) {
-            Text("NotchMaster")
-                .font(.largeTitle)
-            Text("Foundation build")
-                .font(.headline)
-            Text("An expandable notch preview and native app settings.")
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-            Button(notchWindowController.isPreviewVisible ? "Hide Notch Preview" : "Show Notch Preview") {
-                notchWindowController.togglePreview()
+        Form {
+            Section {
+                Toggle("Notch Preview", isOn: previewVisibility)
+                    .toggleStyle(.switch)
+                    .accessibilityIdentifier("NotchPreview")
+            } header: {
+                Text("Features")
+            } footer: {
+                Text("The preview starts hidden each time NotchMaster launches.\n\(notchWindowController.statusMessage)")
             }
-            if notchWindowController.isPreviewVisible {
-                Button(notchWindowController.isExpanded ? "Collapse" : "Expand") {
-                    notchWindowController.toggleExpansion()
+
+            ExpansionSpeedSettings(preferences: preferences)
+
+            Section {
+                SettingsLink {
+                    Text("Open App Settings…")
                 }
             }
-            Text(notchWindowController.statusMessage)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-            SettingsLink {
-                Text("Open Settings…")
-            }
         }
+        .formStyle(.grouped)
         .buttonStyle(ElasticButton())
-        .padding(32)
-        .frame(minWidth: 420, minHeight: 240)
+        .frame(minWidth: 480, minHeight: 380)
+    }
+
+    var previewVisibility: Binding<Bool> {
+        Binding(
+            get: { notchWindowController.isPreviewVisible },
+            set: { isVisible in
+                guard isVisible != notchWindowController.isPreviewVisible else { return }
+                if isVisible {
+                    notchWindowController.showPreview()
+                } else {
+                    notchWindowController.hidePreview()
+                }
+            }
+        )
     }
 }

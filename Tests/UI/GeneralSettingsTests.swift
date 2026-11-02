@@ -8,6 +8,38 @@ import Testing
 @MainActor
 struct GeneralSettingsTests {
     @Test(arguments: [false, true])
+    func foundationToggleUsesConfirmedPreviewState(supported: Bool) throws {
+        let suiteName = "NotchMasterFoundationTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        let controller = NotchWindowController(
+            displays: { supported ? [DisplayFixture(origin: CGPoint(x: -3000, y: -3000)).geometry] : [] },
+            reduceMotion: { true },
+            cursorPosition: { .zero }
+        ) { _ in NSView() }
+        defer { controller.hidePreview() }
+        let view = AppShellView(preferences: PreferencesStore(defaults: defaults), notchWindowController: controller)
+
+        #expect(!view.previewVisibility.wrappedValue)
+        view.previewVisibility.wrappedValue = true
+        #expect(view.previewVisibility.wrappedValue == supported)
+        #expect(controller.isPreviewVisible == supported)
+        if !supported {
+            #expect(controller.statusMessage == NotchPreviewUnavailableReason.noBuiltInDisplay.message)
+        }
+        view.previewVisibility.wrappedValue = false
+        #expect(!controller.isPreviewVisible && !view.previewVisibility.wrappedValue)
+        if !supported {
+            #expect(controller.statusMessage == NotchPreviewUnavailableReason.noBuiltInDisplay.message)
+        }
+
+        controller.togglePreview()
+        #expect(view.previewVisibility.wrappedValue == supported)
+        controller.hidePreview()
+        #expect(!view.previewVisibility.wrappedValue)
+    }
+
+    @Test(arguments: [false, true])
     func failedOperationsKeepTheSettingsBindingConsistent(enabling: Bool) async throws {
         let system = TestLoginItemSystem(status: enabling ? .notRegistered : .enabled)
         system.operationError = LoginItemTestError.rejected

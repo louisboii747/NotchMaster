@@ -3,7 +3,7 @@ import SwiftUI
 
 @MainActor
 struct GeneralSettingsView: View {
-    @Bindable var preferences: PreferencesStore
+    let preferences: PreferencesStore
     let loginItemService: LoginItemService
 
     var body: some View {
@@ -31,27 +31,7 @@ struct GeneralSettingsView: View {
                 Text(loginItemService.statusMessage)
             }
 
-            Section {
-                Slider(value: $preferences.expansionSpeed, in: 0...1) {
-                    Text("Dynamic Notch Expansion Speed")
-                } minimumValueLabel: {
-                    Text("Slow")
-                } maximumValueLabel: {
-                    Text("Fast")
-                }
-                .accessibilityLabel("Dynamic Notch Expansion Speed")
-                .accessibilityValue(durationText)
-
-                LabeledContent("Expansion duration") {
-                    durationText
-                        .monospacedDigit()
-                        .foregroundStyle(.secondary)
-                }
-            } header: {
-                Text("Appearance")
-            } footer: {
-                Text("Faster speed means a shorter expansion duration. Changes are saved locally.")
-            }
+            ExpansionSpeedSettings(preferences: preferences)
         }
         .formStyle(.grouped)
         .onAppear {
@@ -70,6 +50,35 @@ struct GeneralSettingsView: View {
             get: { loginItemService.isEnabled },
             set: { loginItemService.setEnabled($0) }
         )
+    }
+}
+
+@MainActor
+struct ExpansionSpeedSettings: View {
+    @Bindable var preferences: PreferencesStore
+
+    var body: some View {
+        Section {
+            Slider(value: $preferences.expansionSpeed, in: 0...1) {
+                Text("Dynamic Notch Expansion Speed")
+            } minimumValueLabel: {
+                Text("Slow")
+            } maximumValueLabel: {
+                Text("Fast")
+            }
+            .accessibilityLabel("Dynamic Notch Expansion Speed")
+            .accessibilityValue(durationText)
+
+            LabeledContent("Expansion duration") {
+                durationText
+                    .monospacedDigit()
+                    .foregroundStyle(.secondary)
+            }
+        } header: {
+            Text("Appearance")
+        } footer: {
+            Text("Faster speed means a shorter expansion duration. Changes are saved locally.")
+        }
     }
 
     private var durationText: Text {

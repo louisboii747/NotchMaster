@@ -89,8 +89,8 @@ The following names describe the wider plan. Only the Swift files shown in the t
 | :--- | :--- |
 | `Sources/App/NotchMasterApp.swift` | App entry point, window/menu/Settings scenes and last-window lifecycle delegate. |
 | `Sources/App/AppDependencies.swift` | Compose and retain services. |
-| `Sources/UI/AppShellView.swift` | Verification window and temporary Show/Hide Notch Preview and Expand/Collapse controls. |
-| `Sources/UI/NotchMenuView.swift` | Implemented native menu bar preview visibility, Settings and Quit commands. |
+| `Sources/UI/AppShellView.swift` | Foundation feature-settings form with a confirmed preview toggle, shared expansion speed setting and app Settings link. |
+| `Sources/UI/NotchMenuView.swift` | Native menu bar Show/Hide, Expand/Collapse, preview status, feature/app Settings and Quit commands. |
 | `Sources/Core/Plugins/PluginRegistry.swift` | Plugin identities, lifecycle, and enabled state. |
 | `Sources/Core/Windowing/NotchWindowController.swift` | Implemented passive AppKit panel ownership, presentation, and display/sleep handling. |
 | `Sources/Core/Windowing/NotchHoverInteraction.swift` | Implemented hover boundaries, entry detection, delayed collapse and manual overrides. |
@@ -101,7 +101,7 @@ The following names describe the wider plan. Only the Swift files shown in the t
 | `Sources/Core/Sync/SyncCoordinator.swift` | Opt-in iCloud preference synchronization. |
 | `Sources/UI/Settings/SettingsView.swift` | Sidebar and detail composition. |
 | `Sources/UI/Settings/SettingsCategory.swift` | Stable category identity, title, and symbol. |
-| `Sources/UI/Settings/GeneralSettingsView.swift` | Implemented native login-item and expansion speed controls with lifecycle status refresh. |
+| `Sources/UI/Settings/GeneralSettingsView.swift` | Native login-item controls with lifecycle status refresh and the shared `ExpansionSpeedSettings` section used by both settings forms. |
 | `Sources/UI/Settings/AdvancedSettingsView.swift` | Metal effect preference and capability state. |
 | `Sources/UI/Settings/InstalledPluginsView.swift` | Plugin list and lifecycle-aware toggles. |
 | `Sources/UI/Settings/PluginRow.swift` | Accessible plugin label, description, and switch. |

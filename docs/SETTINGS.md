@@ -4,7 +4,9 @@ Status: the native Settings scene implements General's Launch at Login switch, a
 
 ## Opening Settings
 
-The native menu bar menu includes Open Settings, with Command-comma, and brings the app forward before opening the existing SwiftUI Settings scene. The verification window's Settings link and standard app Settings command remain available. Closing either window leaves the menu bar utility running, so Settings can be reopened without relaunching. All entry points use the same `AppDependencies.preferences` store and `AppDependencies.loginItemService` instance.
+The native menu bar menu includes Open Settings, with Command-comma, and brings the app forward before opening the existing SwiftUI Settings scene. The foundation window's Open App Settings link and standard app Settings command remain available. Closing either window leaves the menu bar utility running, so Settings can be reopened without relaunching. All app Settings entry points use the same `AppDependencies.preferences` store and `AppDependencies.loginItemService` instance.
+
+Feature Settings in the menu bar opens the separate foundation window, also available through Window > NotchMaster. Its grouped form contains a Notch Preview feature toggle and the expansion speed preference. The toggle reflects confirmed preview visibility, stays off if showing the preview fails, and resets to off on launch. Both windows reuse the same `ExpansionSpeedSettings` section and preferences store. Show/Hide, manual Expand/Collapse and the current preview status are available directly in the menu bar.
 
 ## Window structure
 
@@ -39,7 +41,7 @@ Launch-at-login state comes from `SMAppService.mainApp` through `LoginItemServic
 
 When approval is required, the switch remains off and disabled, accompanied by Open Login Items Settings. This opens Apple's Login Items page through the Core adapter; the user grants approval or removes the pending item there. Returning to General Settings refreshes the status. Appearance, app activation and app-window focus notifications also refresh it without polling.
 
-Launch at Login keeps the existing verification-window startup behaviour. The current project uses ad hoc signing; validate actual login launching with a properly signed installed copy, as described in [prototype testing](PROTOTYPE_TESTING.md#launch-at-login-checks).
+Launch at Login uses the same quiet menu bar startup, with the development window available through Window > NotchMaster and the notch preview initially hidden. The current project uses ad hoc signing; validate actual login launching with a properly signed installed copy, as described in [prototype testing](PROTOTYPE_TESTING.md#launch-at-login-checks).
 
 ## Advanced
 
