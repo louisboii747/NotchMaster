@@ -7,13 +7,14 @@ private enum SettingsCategory: Hashable {
 @MainActor
 struct SettingsView: View {
     let preferences: PreferencesStore
+    let loginItemService: LoginItemService
     @State private var selection = SettingsCategory.general
 
     var body: some View {
         NavigationSplitView {
             SettingsSidebar(selection: $selection)
         } detail: {
-            SettingsDetail(selection: selection, preferences: preferences)
+            SettingsDetail(selection: selection, preferences: preferences, loginItemService: loginItemService)
         }
         .frame(minWidth: 480, minHeight: 240)
     }
@@ -37,11 +38,12 @@ private struct SettingsSidebar: View {
 private struct SettingsDetail: View {
     let selection: SettingsCategory
     let preferences: PreferencesStore
+    let loginItemService: LoginItemService
 
     var body: some View {
         switch selection {
         case .general:
-            GeneralSettingsView(preferences: preferences)
+            GeneralSettingsView(preferences: preferences, loginItemService: loginItemService)
                 .navigationTitle("General")
         }
     }

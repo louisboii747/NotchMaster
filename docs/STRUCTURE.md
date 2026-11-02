@@ -1,6 +1,6 @@
 # Repository file map
 
-This is the foundation, menu bar and hover preview file layout. The native Xcode project has one macOS application target and one focused Swift Testing target. There are no third-party dependencies or packages.
+This is the foundation, login-item, menu bar and hover preview file layout. The native Xcode project has one macOS application target and one focused Swift Testing target. There are no package dependencies. A small adapted SwiftPieces button style is included as source with its own licence.
 
 ```text
 NotchMaster/
@@ -8,6 +8,10 @@ NotchMaster/
 ├── .gitignore
 ├── README.md
 ├── LICENSE
+├── SwiftPieces/
+│   ├── README.md
+│   ├── LICENSE.txt
+│   └── Controls/ElasticButton.swift
 ├── Config/
 │   └── Shared.xcconfig
 ├── NotchMaster.xcodeproj/
@@ -26,6 +30,7 @@ NotchMaster/
 │   │   └── AppDependencies.swift
 │   ├── Core/
 │   │   ├── README.md
+│   │   ├── Services/LoginItemService.swift
 │   │   ├── Settings/PreferencesStore.swift
 │   │   └── Windowing/
 │   │       ├── DisplayGeometry.swift
@@ -42,10 +47,12 @@ NotchMaster/
 ├── Tests/
 │   ├── Core/
 │   │   ├── PreferencesStoreTests.swift
+│   │   ├── LoginItemServiceTests.swift
 │   │   ├── DisplayGeometryTests.swift
 │   │   ├── NotchWindowControllerTests.swift
 │   │   └── NotchHoverTests.swift
 │   └── UI/
+│       ├── GeneralSettingsTests.swift
 │       ├── NotchViewTests.swift
 │       └── NotchMenuTests.swift
 └── docs/
@@ -69,9 +76,10 @@ NotchMaster/
 | `Sources/App/` | Entry point, scenes, lifecycle, dependency composition | Core and UI |
 | `Sources/Core/` | State, plugin registry, platform services, window coordinator | Foundation and required Apple frameworks; no UI-layer dependency |
 | `Sources/UI/` | Settings, notch presentation, reusable materials | Core contracts and SwiftUI; AppKit bridging only when presentation requires it |
+| `SwiftPieces/` | Local macOS button-style adaptation and its licence | SwiftUI; no Core state or ServiceManagement calls |
 | `docs/` | Product intent, architecture, implementation requirements | Repository-relative documentation and assets |
 
-These are source groups in the macOS target. Separate modules or packages should be introduced only when the dependency and testing needs justify them. `Config/Shared.xcconfig` supplies the arm64-only architecture, macOS baseline, Swift 6 concurrency settings, development version, and local signing defaults. The shared scheme runs preference, display-geometry, window-controller, hover, clock-content and menu tests. App icons are resized copies of the existing logo; documentation artwork is preserved.
+These are source groups in the macOS target. Separate modules or packages should be introduced only when the dependency and testing needs justify them. `Config/Shared.xcconfig` supplies the arm64-only architecture, macOS baseline, Swift 6 concurrency settings, development version, and local signing defaults. The shared scheme runs preference, login-item service, Settings lifecycle/binding, display-geometry, window-controller, hover, clock-content and menu tests. App icons are resized copies of the existing logo; documentation artwork is preserved.
 
 ## Proposed implementation file boundaries
 
@@ -88,12 +96,12 @@ The following names describe the wider plan. Only the Swift files shown in the t
 | `Sources/Core/Windowing/NotchHoverInteraction.swift` | Implemented hover boundaries, entry detection, delayed collapse and manual overrides. |
 | `Sources/Core/Windowing/DisplayGeometry.swift` | Implemented built-in display selection and validated compact and expanded preview geometry. |
 | `Sources/Core/Settings/PreferencesStore.swift` | Validated local preferences and persistence. |
-| `Sources/Core/Services/LoginItemService.swift` | Launch-at-login status and registration. |
+| `Sources/Core/Services/LoginItemService.swift` | Implemented observable login-item status, registration, unregistration, approval and errors through an injected system adapter. |
 | `Sources/Core/Services/EntitlementService.swift` | Verified Pro access and purchase restoration. |
 | `Sources/Core/Sync/SyncCoordinator.swift` | Opt-in iCloud preference synchronization. |
 | `Sources/UI/Settings/SettingsView.swift` | Sidebar and detail composition. |
 | `Sources/UI/Settings/SettingsCategory.swift` | Stable category identity, title, and symbol. |
-| `Sources/UI/Settings/GeneralSettingsView.swift` | Login item and expansion speed controls. |
+| `Sources/UI/Settings/GeneralSettingsView.swift` | Implemented native login-item and expansion speed controls with lifecycle status refresh. |
 | `Sources/UI/Settings/AdvancedSettingsView.swift` | Metal effect preference and capability state. |
 | `Sources/UI/Settings/InstalledPluginsView.swift` | Plugin list and lifecycle-aware toggles. |
 | `Sources/UI/Settings/PluginRow.swift` | Accessible plugin label, description, and switch. |

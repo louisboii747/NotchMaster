@@ -3,6 +3,7 @@
 included:
   - Sources
   - Tests
+  - SwiftPieces
 
 only_rules:
   - closing_brace

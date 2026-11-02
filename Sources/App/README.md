@@ -6,4 +6,6 @@ Contains the macOS application entry point and composition root.
 
 Keep feature logic in Core and presentation in UI. AppKit window management belongs to Core; App owns the coordinator's lifetime.
 
+`AppDependencies` also owns `LoginItemService`, with an injectable `LoginItemSystem` for tests, and passes it into Settings alongside preferences. Creating dependencies queries current login status without registering anything. Launch at Login preserves the existing verification-window startup behaviour.
+
 The root Xcode project compiles App, Core, and UI as source groups in one application module. See the [architecture](../../docs/ARCHITECTURE.md) and [file map](../../docs/STRUCTURE.md).

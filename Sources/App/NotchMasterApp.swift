@@ -19,9 +19,9 @@ struct NotchMasterApp: App {
         .menuBarExtraStyle(.menu)
 
         Settings {
-            SettingsView(preferences: dependencies.preferences)
+            SettingsView(preferences: dependencies.preferences, loginItemService: dependencies.loginItemService)
         }
-        .defaultSize(width: 520, height: 260)
+        .defaultSize(width: 520, height: 380)
     }
 }
 

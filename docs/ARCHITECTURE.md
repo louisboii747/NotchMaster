@@ -1,6 +1,6 @@
 # Architecture direction
 
-Status: Phase 1 foundation, animated notch preview, automatic hover interaction with native haptic requests, an expanded live clock and date, and native menu bar controls are implemented. The startup, preference, and preview flows below exist; later feature sections record intended boundaries.
+Status: Phase 1 foundation, animated notch preview, automatic hover interaction with native haptic requests, an expanded live clock and date, native menu bar controls, and Launch at Login are implemented. The startup, preference, and preview flows below exist; later feature sections record intended boundaries.
 
 ## Product boundary
 
@@ -10,11 +10,11 @@ The foundation uses one native Xcode application target, Swift 6 language mode w
 
 ## Implemented startup and preference flow
 
-`NotchMasterApp` is the `@main` SwiftUI entry point. It retains `AppDependencies` in `@State`, opens a single verification window, and declares native `MenuBarExtra` and `Settings` scenes. The composition root creates `PreferencesStore` and `NotchWindowController`. It passes preferences explicitly through `SettingsView` to `GeneralSettingsView` and the same controller to `AppShellView` and `NotchMenuView`. App injects a duration provider that reads the shared preferences store, plus a content factory that accepts the validated camera height and hosts UI's `NotchView`, keeping Core independent of UI view types. No panel is created until Show Notch Preview succeeds.
+`NotchMasterApp` is the `@main` SwiftUI entry point. It retains `AppDependencies` in `@State`, opens a single verification window, and declares native `MenuBarExtra` and `Settings` scenes. The composition root creates `PreferencesStore`, `LoginItemService` and `NotchWindowController`. It passes preferences and the login-item service explicitly through `SettingsView` to `GeneralSettingsView` and the same controller to `AppShellView` and `NotchMenuView`. App injects a duration provider that reads the shared preferences store, plus a content factory that accepts the validated camera height and hosts UI's `NotchView`, keeping Core independent of UI view types. No panel is created until Show Notch Preview succeeds.
 
 The menu bar extra uses the monochrome `macbook` SF Symbol and native menu style. Its Show/Hide title reads the controller's observable `isPreviewVisible` directly, and its action calls the existing `togglePreview()`. There is no menu-owned visibility Boolean or second controller. Sleep, unsupported geometry and actions in the verification window therefore update the menu from the same confirmed state. Open Settings activates the app using `NSApplication.activate()` and invokes SwiftUI's environment `openSettings` action for the existing Settings scene. Quit calls native application termination. Both retain the standard Command-comma and Command-Q shortcuts.
 
-`NotchMasterAppDelegate`, retained through `@NSApplicationDelegateAdaptor`, returns false from `applicationShouldTerminateAfterLastWindowClosed`. Closing the verification or Settings window therefore leaves the menu bar utility and app-owned dependencies running. The app remains a regular macOS app with its Dock icon and native Window > NotchMaster command for reopening the development window. Preview visibility still starts hidden on launch, and no launch-at-login registration is implemented.
+`NotchMasterAppDelegate`, retained through `@NSApplicationDelegateAdaptor`, returns false from `applicationShouldTerminateAfterLastWindowClosed`. Closing the verification or Settings window therefore leaves the menu bar utility and app-owned dependencies running. The app remains a regular macOS app with its Dock icon and native Window > NotchMaster command for reopening the development window. Preview visibility still starts hidden on launch. Launch at Login preserves this startup-window behaviour; there is no login-launch detection or automatic registration at startup.
 
 The store uses Foundation `UserDefaults` for one local duration under `notchExpansionDuration`. It accepts an injected defaults instance so tests can use isolated suites. Missing, malformed, or non-finite values become 0.30 seconds. Finite values are clamped to 0.15–0.60 seconds on load and assignment, and the validated value is persisted. The store does not monitor changes made outside the running app.
 
@@ -109,7 +109,15 @@ The foundation enables Swift 6 language mode and complete concurrency checking. 
 
 Persist small local preferences through a dedicated store. Validate values on load, clamp expansion duration to its supported range, and version any schema that later participates in sync.
 
-Launch at Login must reflect Service Management status. A stored Boolean alone cannot establish that macOS will launch the app. Registration failure, pending approval, and changes made outside the app need visible states.
+`Sources/Core/Services/LoginItemService.swift` implements Launch at Login as a main-actor observable service. `MainAppLoginItemSystem` is the only adapter that calls `SMAppService.mainApp` to query status, register or unregister, and opens Apple's Login Items settings page. The injected `LoginItemSystem` protocol lets tests supply status and operations without changing real login items. `AppDependencies` creates and retains the service and passes it explicitly through `SettingsView` into `GeneralSettingsView`. `PreferencesStore` remains responsible only for expansion duration.
+
+The native Startup switch reads `LoginItemService.isEnabled`, derived strictly from `.enabled`. `.notRegistered`, `.requiresApproval`, `.notFound` and unknown future statuses are off. Pending approval disables the switch and exposes Open Login Items Settings with an explanation; approval and removal remain under the user's control in System Settings. The service can unregister an enabled or pending registration. It does not invent a persisted desired state or claim that an accepted registration is already authorized.
+
+Each explicit change reads system status before deciding whether an operation is needed and again after success or failure. Errors remain visible alongside the confirmed status, so failed registration leaves the switch off and failed unregistration leaves it on if macOS still reports enabled. An external status change clears the previous operation's error. Repeated requests do not re-register an enabled or approval-required service. Operations use the native synchronous API on the main actor without background workers, polling, helper executables, custom LaunchAgents or scripts.
+
+General Settings refreshes on appearance, application activation and app-window key notifications while the view is mounted. This covers returning from System Settings, reopening the window and switching focus from the verification window, without storing a second UI Boolean. Settings receives a taller default window for its Startup and Appearance sections. The verification window's startup behaviour and the notch controller are unchanged.
+
+The foundation window applies the local macOS adaptation of SwiftPieces `ElasticButton` to its Show/Hide, Expand/Collapse and Settings controls. It wraps native SwiftUI buttons, adding the component's press scale and spring values without replacing button actions or focus handling. macOS 26 and later use native `.glass`; older systems and Reduce Transparency use `.bordered`. Reduce Motion removes the added scaling. Attribution, adaptation details and the separate component licence are in [SwiftPieces](../SwiftPieces/README.md).
 
 Metal border effects are optional presentation. Respect Reduce Motion and Reduce Transparency, provide a non-Metal fallback, and avoid continuous rendering when the hub is inactive.
 
@@ -152,6 +160,8 @@ Consulted on 28 October through 2 November 2026. These links describe platform A
 - [NavigationSplitView](https://developer.apple.com/documentation/swiftui/navigationsplitview)
 - [GroupedFormStyle](https://developer.apple.com/documentation/swiftui/groupedformstyle)
 - [SMAppService](https://developer.apple.com/documentation/servicemanagement/smappservice)
+- [SMAppService registration](https://developer.apple.com/documentation/servicemanagement/smappservice/register())
+- [SMAppService status](https://developer.apple.com/documentation/servicemanagement/smappservice/status-swift.enum)
 - [NSScreen safeAreaInsets](https://developer.apple.com/documentation/appkit/nsscreen/safeareainsets)
 - [NSScreen auxiliaryTopLeftArea](https://developer.apple.com/documentation/appkit/nsscreen/auxiliarytopleftarea-uglc)
 - [NSWindow orderFrontRegardless](https://developer.apple.com/documentation/appkit/nswindow/orderfrontregardless())

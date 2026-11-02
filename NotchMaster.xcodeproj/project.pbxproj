@@ -25,6 +25,11 @@
 		400000000000000000000010 /* NotchViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000013 /* NotchViewTests.swift */; };
 		400000000000000000000011 /* NotchMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000014 /* NotchMenuView.swift */; };
 		400000000000000000000012 /* NotchMenuTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000015 /* NotchMenuTests.swift */; };
+		400000000000000000000013 /* LoginItemService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000016 /* LoginItemService.swift */; };
+		400000000000000000000014 /* LoginItemServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000017 /* LoginItemServiceTests.swift */; };
+		400000000000000000000015 /* GeneralSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000018 /* GeneralSettingsTests.swift */; };
+		400000000000000000000016 /* ElasticButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000019 /* ElasticButton.swift */; };
+		400000000000000000000017 /* LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 30000000000000000000001A /* LICENSE.txt */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -59,6 +64,11 @@
 		300000000000000000000013 /* NotchViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchViewTests.swift; sourceTree = "<group>"; };
 		300000000000000000000014 /* NotchMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchMenuView.swift; sourceTree = "<group>"; };
 		300000000000000000000015 /* NotchMenuTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchMenuTests.swift; sourceTree = "<group>"; };
+		300000000000000000000016 /* LoginItemService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginItemService.swift; sourceTree = "<group>"; };
+		300000000000000000000017 /* LoginItemServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginItemServiceTests.swift; sourceTree = "<group>"; };
+		300000000000000000000018 /* GeneralSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralSettingsTests.swift; sourceTree = "<group>"; };
+		300000000000000000000019 /* ElasticButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Controls/ElasticButton.swift; sourceTree = "<group>"; };
+		30000000000000000000001A /* LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -116,6 +126,7 @@
 			children = (
 				200000000000000000000005 /* Settings */,
 				20000000000000000000000C /* Windowing */,
+				20000000000000000000000F /* Services */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -126,6 +137,14 @@
 				300000000000000000000003 /* PreferencesStore.swift */,
 			);
 			path = Settings;
+			sourceTree = "<group>";
+		};
+		20000000000000000000000F /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				300000000000000000000016 /* LoginItemService.swift */,
+			);
+			path = Services;
 			sourceTree = "<group>";
 		};
 		200000000000000000000006 /* UI */ = {
@@ -155,6 +174,7 @@
 				30000000000000000000000F /* DisplayGeometryTests.swift */,
 				300000000000000000000010 /* NotchWindowControllerTests.swift */,
 				300000000000000000000012 /* NotchHoverTests.swift */,
+				300000000000000000000017 /* LoginItemServiceTests.swift */,
 			);
 			path = Tests/Core;
 			sourceTree = "<group>";
@@ -207,6 +227,7 @@
 			children = (
 				300000000000000000000013 /* NotchViewTests.swift */,
 				300000000000000000000015 /* NotchMenuTests.swift */,
+				300000000000000000000018 /* GeneralSettingsTests.swift */,
 			);
 			path = Tests/UI;
 			sourceTree = "<group>";
@@ -214,6 +235,8 @@
 		4A71C5BB3098AD2B008C3955 /* SwiftPieces */ = {
 			isa = PBXGroup;
 			children = (
+				300000000000000000000019 /* ElasticButton.swift */,
+				30000000000000000000001A /* LICENSE.txt */,
 			);
 			path = SwiftPieces;
 			sourceTree = "<group>";
@@ -300,6 +323,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				400000000000000000000008 /* Assets.xcassets in Resources */,
+				400000000000000000000017 /* LICENSE.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -328,6 +352,8 @@
 				40000000000000000000000B /* NotchView.swift in Sources */,
 				40000000000000000000000E /* NotchHoverInteraction.swift in Sources */,
 				400000000000000000000011 /* NotchMenuView.swift in Sources */,
+				400000000000000000000013 /* LoginItemService.swift in Sources */,
+				400000000000000000000016 /* ElasticButton.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -341,6 +367,8 @@
 				40000000000000000000000F /* NotchHoverTests.swift in Sources */,
 				400000000000000000000010 /* NotchViewTests.swift in Sources */,
 				400000000000000000000012 /* NotchMenuTests.swift in Sources */,
+				400000000000000000000014 /* LoginItemServiceTests.swift in Sources */,
+				400000000000000000000015 /* GeneralSettingsTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

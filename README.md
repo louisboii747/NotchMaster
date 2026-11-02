@@ -50,13 +50,14 @@ NotchMaster aims to turn the MacBook notch into a useful, expandable hub. Develo
 - Native AppKit animation, plus an expansion-speed preference saved in Settings.
 - Reduce Motion support and optional native trackpad haptic requests on hover transitions.
 - Native menu bar controls for Show/Hide Notch Preview, Open Settings and Quit, available after closing the verification window.
+- Launch at Login in General Settings, backed by macOS registration status with approval guidance and visible errors.
 - Temporary Show/Hide and Expand/Collapse controls for testing.
 
 **Planned, not implemented yet**
 
 - Compact and expanded plugin views with useful controls and information.
 - A plugin registry and settings to enable or disable plugins.
-- Launch at Login, optional Metal border effects, and additional accessibility options.
+- Optional Metal border effects and additional accessibility options.
 - A virtual notch for Apple Silicon Macs without a physical display notch.
 - Optional iCloud preference and layout sync as part of a potential Pro edition.
 
@@ -104,7 +105,7 @@ cd NotchMaster
 open NotchMaster.xcodeproj
 ```
 
-Build and run the focused preference, geometry, window-controller, hover, SwiftUI content and menu tests for Apple Silicon:
+Build and run the focused preference, login-item, Settings, geometry, window-controller, hover, SwiftUI content and menu tests for Apple Silicon:
 
 ```sh
 xcodebuild -project NotchMaster.xcodeproj -scheme NotchMaster -configuration Debug -destination 'platform=macOS,arch=arm64' build
@@ -125,6 +126,10 @@ swiftformat --lint .
 To apply the configured formatting locally, run `swiftformat .` and review the diff before committing. SwiftLint and SwiftFormat use the deliberately small rule sets in `.swiftlint.yml` and `.swiftformat`; extend these rules incrementally as the codebase develops.
 
 The prototype uses local ad hoc signing; distribution signing isn't configured. Click the monochrome MacBook symbol in the menu bar to show or hide the preview, open Settings, or quit. The preview starts hidden and the Show/Hide title follows the controller's confirmed visibility, including after sleep or an unsupported display change. Closing the verification window leaves the menu bar utility running. The app retains its Dock icon; reopen the development window through Window > NotchMaster to test manual expansion and collapse. Open Settings also has the standard Command-comma shortcut, and Quit uses Command-Q.
+
+General Settings includes a native Launch at Login switch. It is off when macOS reports no registration, and on only when macOS confirms the app is enabled. Approval-required status offers Open Login Items Settings. Status refreshes when Settings appears and when the app or a window becomes active. No login Boolean is stored in preferences. Test actual login launching with a properly signed installed copy at a stable path; an ad hoc Xcode build does not establish that behaviour. See [login-item testing](docs/PROTOTYPE_TESTING.md#launch-at-login-checks).
+
+The foundation window's buttons use a small macOS adaptation of [SwiftPieces ElasticButton](https://swiftpieces.com/docs/components/controls/elastic-button), retaining native Liquid Glass buttons on macOS 26 and later and native bordered buttons on earlier systems. Reduce Motion removes the press scaling, and Reduce Transparency selects the bordered treatment. The adapted component has a separate [SwiftPieces licence](SwiftPieces/LICENSE.txt).
 
 For live clock behaviour, hover boundaries, animation, accessibility, haptics and manual testing, see **[Prototype testing](docs/PROTOTYPE_TESTING.md)**. For implementation details, see [Architecture](docs/ARCHITECTURE.md) and the [file map](docs/STRUCTURE.md).
 

@@ -2,7 +2,7 @@
 
 NotchMaster is an early prototype, not yet a user-facing release.
 
-The prototype supports one active, unmirrored built-in display with validated physical-notch geometry. It has native menu bar controls, a development verification window, automatic hover interaction, native haptic requests, one expansion speed preference, and a passive expanded clock and date. It starts hidden. The physical camera region contains no drawable pixels.
+The prototype supports one active, unmirrored built-in display with validated physical-notch geometry. It has native menu bar controls, a development verification window, Launch at Login, automatic hover interaction, native haptic requests, one expansion speed preference, and a passive expanded clock and date. It starts hidden. The physical camera region contains no drawable pixels.
 
 ## Automated checks
 
@@ -15,6 +15,8 @@ xcodebuild -project NotchMaster.xcodeproj -scheme NotchMaster -configuration Deb
 
 Existing tests cover preferences, validated display geometry, fixed animation anchors, reversal, hover boundaries, delayed collapse, native haptic request counts, Reduce Motion, focus, click-through panel configuration, display changes, sleep, and cleanup.
 
+Login-item tests inject a fake system adapter and cover all reported statuses, confirmed registration and unregistration, pending approval, thrown errors, status changes during a failure, retries, duplicate requests, external changes, opening the approval page and dependency injection without persisting a login Boolean. Settings tests exercise the same binding used by the native toggle after failed operations and retries, and host the view to verify its activation and window-focus refresh callbacks. They do not register or unregister a real login item.
+
 `NotchMenuTests` renders the actual SwiftUI menu through native `NSHostingMenu` and invokes its preview command. It checks titles against confirmed panel visibility, changes made through the shared controller, sleep and unsupported displays, failed Show requests, recovery with panel reuse, shortcuts, and continued control after closing and releasing a verification view. Native menu inspection requires macOS 14.4 or later; that suite is explicitly skipped on macOS 14.0 through 14.3 without changing the app's deployment target. Settings foreground presentation, actual status-item interaction and Quit remain manual end-to-end checks.
 
 The clock checks compare compact SwiftUI rendering with the original black shape, verify that reveal begins only after the measured content fits, check localized expanded layouts, exercise a real `NSHostingView` during panel resizing and reversal, and verify that content receives refreshed validated camera clearance. Synthetic geometry and rendered pixels do not establish physical camera alignment or perceived animation quality.
@@ -22,6 +24,8 @@ The clock checks compare compact SwiftUI rendering with the original black shape
 Validation on 1 November 2026 passed the macOS arm64 Debug build and all 54 test functions, covering 120 cases, with Swift warnings treated as errors on macOS 27.2 and Xcode 27.2. There were no failures, skipped cases or reported runtime warnings. The built executable contains only arm64. `git diff --check` passed.
 
 Menu bar validation on 2 November 2026 passed the arm64 Debug build and all 56 test functions, covering 123 cases, with Swift warnings treated as errors on macOS 27.2 and Xcode 27.2. The native menu tests ran without skips, and the full suite reported no failures or runtime warnings. SwiftLint 0.65.1 reported zero violations across 17 Swift files; SwiftFormat 0.64.5 reported no files requiring formatting. Actual status-item appearance, Settings foreground presentation, Quit, physical notch behaviour and macOS 14 runtime behaviour still require the manual checks below.
+
+Launch at Login validation on 2 November 2026 passed the arm64 Debug build and all 67 test functions, covering 147 cases, with Swift warnings treated as errors on macOS 27.2 and Xcode 27.2. The full suite reported no failures, skips or runtime warnings. SwiftLint 0.65.1 found no violations across 21 Swift files, SwiftFormat 0.64.5 required no formatting changes, and `git diff --check` passed. The executable contains only arm64, and the SwiftPieces licence notice is included in its resources. Automated checks cover injected service operations and Settings binding/lifecycle behaviour; real login launching and the foundation button appearance and interaction remain manual checks.
 
 Compact rendering matched the original surface at 32, 40 and 80-point camera heights. Expanded fitting and pixel-bound checks passed for US English, UK English, German, French, Japanese and Saudi Arabic, including 40-point camera clearance. Inspected test-result snapshots showed the native 12-hour and 24-hour formats and localized date order. Native hosting-view captures confirmed hidden compact and early-expansion content, visible content near full expansion, and hidden content after reversal to compact. The pixel test freezes native animation at each sample frame; existing tests separately exercise uninterrupted native animation. PNG attachments are retained in the Xcode test results.
 
@@ -40,6 +44,21 @@ While the preview is shown, move the pointer toward the physical notch from belo
 Manual Expand/Collapse cancels pending hover actions and holds the chosen state. A fresh entry into the activation region resumes automatic interaction; if the pointer was already nearby when a manual action occurred, first leave the wider exit region. A stationary pointer at initial presentation or after a display change produces no transition or haptic request.
 
 Each actual hover expansion or delayed collapse requests one immediate `.generic` haptic through `NSHapticFeedbackManager.defaultPerformer`. Repeated polling, cancelled collapses, manual controls and lifecycle changes do not request feedback. AppKit selects the performer using the current input device, accessibility settings and system preferences. Feedback is optional: macOS may suppress it, including when there is no compatible trackpad or no finger touching it. Visual interaction always works independently.
+
+## Launch at Login checks
+
+The project currently uses local ad hoc signing. Apple's Service Management API requires a code-signed app and can reject a registration when its signature is unsuitable. An Xcode build in DerivedData is useful for UI and error-path checks, but its build location and executable can change between builds. A passing unit suite or successful Debug launch does not establish login launching for an installed app. Do not assume that moving an app to Applications alone fixes a signing error.
+
+For an end-to-end check, build with a suitable Apple-issued signing identity, install the app at a stable path such as `/Applications/NotchMaster.app`, and run that copy. Use one copy with the bundle identifier under test, and remove any old registration before replacing or moving that copy. No signing identity or login-item registration is changed by the automated tests. The app keeps its existing verification window on startup, including a login launch.
+
+1. Open Settings > General. With no existing registration, Launch at Login must be off. Enable it and compare the switch and status text with System Settings > General > Login Items. It must turn on only when macOS reports enabled.
+2. If approval is required, the switch must remain off and disabled, with an explanation and Open Login Items Settings. Use that action, approve NotchMaster, then return to General Settings. The switch must refresh to the actual enabled state. Remove or deny the item there to verify the corresponding pending or disabled state on return.
+3. Change the item externally while NotchMaster stays running. Return from System Settings, switch from the foundation window to Settings, and close/reopen Settings. Each path must show current macOS status without restarting the app.
+4. Disable Launch at Login and confirm macOS removes the registration while NotchMaster continues running. If enabling or disabling fails, check the inline error and confirm the switch matches macOS rather than the requested value. Rebuild, move or re-sign test copies only after disabling their old registration.
+5. With a properly signed installed copy enabled, save your work, log out and back in, and confirm the app launches with its usual verification window and hidden notch preview. Disable the item and repeat to confirm it no longer launches. Saved expansion speed must remain independent of login-item registration.
+6. Exercise every foundation-window button with the pointer and keyboard in light and dark appearances, then with Reduce Motion and Reduce Transparency. Check the native Liquid Glass treatment on macOS 26 or later, the bordered fallback on earlier systems, and that each button performs its action once. Recheck Settings access and native focus indication.
+
+Real registration, approval prompts, installed-app signing and login/logout behaviour require these manual checks. The macOS 14 runtime and appearance fallback remain separate hardware/OS validation work.
 
 ## MacBook checks before review
 

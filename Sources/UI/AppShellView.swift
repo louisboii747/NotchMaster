@@ -10,7 +10,7 @@ struct AppShellView: View {
                 .font(.largeTitle)
             Text("Foundation build")
                 .font(.headline)
-            Text("An expandable notch preview and one local preference.")
+            Text("An expandable notch preview and native app settings.")
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
             Button(notchWindowController.isPreviewVisible ? "Hide Notch Preview" : "Show Notch Preview") {
@@ -29,6 +29,7 @@ struct AppShellView: View {
                 Text("Open Settings…")
             }
         }
+        .buttonStyle(ElasticButton())
         .padding(32)
         .frame(minWidth: 420, minHeight: 240)
     }

@@ -1,10 +1,10 @@
 # Native settings specification
 
-Status: the Phase 1 native Settings scene implements only General's expansion speed slider and local persistence. The sidebar and other controls below remain future requirements.
+Status: the native Settings scene implements General's Launch at Login switch, approval guidance and error states, plus the expansion speed slider and local duration persistence. The sidebar contains General only; other categories below remain future requirements.
 
 ## Opening Settings
 
-The native menu bar menu includes Open Settings, with Command-comma, and brings the app forward before opening the existing SwiftUI Settings scene. The verification window's Settings link and standard app Settings command remain available. Closing either window leaves the menu bar utility running, so Settings can be reopened without relaunching. All entry points use the same `AppDependencies.preferences` store; no additional settings or login-item controls are implemented by the menu bar milestone.
+The native menu bar menu includes Open Settings, with Command-comma, and brings the app forward before opening the existing SwiftUI Settings scene. The verification window's Settings link and standard app Settings command remain available. Closing either window leaves the menu bar utility running, so Settings can be reopened without relaunching. All entry points use the same `AppDependencies.preferences` store and `AppDependencies.loginItemService` instance.
 
 ## Window structure
 
@@ -30,12 +30,16 @@ Use native `Label` rows and the user's accent colour. Verify symbol availability
 
 | Group | Control | Behaviour |
 | :--- | :--- | :--- |
-| Startup | **Launch at Login** · native toggle | Bind through a Service Management adapter. Show actual registration status; handle failure and approval requirements. Default to off. |
-| Appearance | **Dynamic Notch Expansion Speed** · native slider | Slow-to-fast presentation mapped inversely to expansion duration. Proposed duration range: 0.15–0.60 seconds, default 0.30 seconds. Clamp persisted values. |
+| Startup | **Launch at Login** · native toggle | Implemented through Core's Service Management adapter. On only for confirmed enabled status; off when unregistered. Show errors and required approval. |
+| Appearance | **Dynamic Notch Expansion Speed** · native slider | Implemented slow-to-fast presentation mapped inversely to expansion duration. Duration range: 0.15–0.60 seconds, default 0.30 seconds. Clamp persisted values. |
 
 Give the slider labelled endpoints and an accessible current value. Increasing speed must shorten the duration. Reduce Motion should provide an appropriate reduced transition regardless of the stored animation preference.
 
-Launch-at-login changes must report failure and reconcile the visible toggle with actual OS state. Do not present successful enablement before registration succeeds. Re-read status when the Settings window becomes active so external changes are reflected.
+Launch-at-login state comes from `SMAppService.mainApp` through `LoginItemService`, with no UserDefaults Boolean. Each operation re-reads macOS status, including after a thrown error. Failed registration stays off and failed unregistration stays on when that is still the confirmed state. Status text describes disabled, enabled, approval-required, missing-service and unknown states. Errors are shown inline and remain until another attempt or an external status change.
+
+When approval is required, the switch remains off and disabled, accompanied by Open Login Items Settings. This opens Apple's Login Items page through the Core adapter; the user grants approval or removes the pending item there. Returning to General Settings refreshes the status. Appearance, app activation and app-window focus notifications also refresh it without polling.
+
+Launch at Login keeps the existing verification-window startup behaviour. The current project uses ad hoc signing; validate actual login launching with a properly signed installed copy, as described in [prototype testing](PROTOTYPE_TESTING.md#launch-at-login-checks).
 
 ## Advanced
 
