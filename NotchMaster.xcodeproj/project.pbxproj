@@ -23,6 +23,8 @@
 		40000000000000000000000E /* NotchHoverInteraction.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000011 /* NotchHoverInteraction.swift */; };
 		40000000000000000000000F /* NotchHoverTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000012 /* NotchHoverTests.swift */; };
 		400000000000000000000010 /* NotchViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000013 /* NotchViewTests.swift */; };
+		400000000000000000000011 /* NotchMenuView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000014 /* NotchMenuView.swift */; };
+		400000000000000000000012 /* NotchMenuTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000015 /* NotchMenuTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -55,6 +57,8 @@
 		300000000000000000000011 /* NotchHoverInteraction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchHoverInteraction.swift; sourceTree = "<group>"; };
 		300000000000000000000012 /* NotchHoverTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchHoverTests.swift; sourceTree = "<group>"; };
 		300000000000000000000013 /* NotchViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchViewTests.swift; sourceTree = "<group>"; };
+		300000000000000000000014 /* NotchMenuView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchMenuView.swift; sourceTree = "<group>"; };
+		300000000000000000000015 /* NotchMenuTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchMenuTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -128,6 +132,7 @@
 			isa = PBXGroup;
 			children = (
 				300000000000000000000004 /* AppShellView.swift */,
+				300000000000000000000014 /* NotchMenuView.swift */,
 				200000000000000000000007 /* Settings */,
 				20000000000000000000000D /* Notch */,
 			);
@@ -201,6 +206,7 @@
 			isa = PBXGroup;
 			children = (
 				300000000000000000000013 /* NotchViewTests.swift */,
+				300000000000000000000015 /* NotchMenuTests.swift */,
 			);
 			path = Tests/UI;
 			sourceTree = "<group>";
@@ -321,6 +327,7 @@
 				40000000000000000000000A /* NotchWindowController.swift in Sources */,
 				40000000000000000000000B /* NotchView.swift in Sources */,
 				40000000000000000000000E /* NotchHoverInteraction.swift in Sources */,
+				400000000000000000000011 /* NotchMenuView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -333,6 +340,7 @@
 				40000000000000000000000D /* NotchWindowControllerTests.swift in Sources */,
 				40000000000000000000000F /* NotchHoverTests.swift in Sources */,
 				400000000000000000000010 /* NotchViewTests.swift in Sources */,
+				400000000000000000000012 /* NotchMenuTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

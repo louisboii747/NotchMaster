@@ -2,6 +2,10 @@
 
 Status: the Phase 1 native Settings scene implements only General's expansion speed slider and local persistence. The sidebar and other controls below remain future requirements.
 
+## Opening Settings
+
+The native menu bar menu includes Open Settings, with Command-comma, and brings the app forward before opening the existing SwiftUI Settings scene. The verification window's Settings link and standard app Settings command remain available. Closing either window leaves the menu bar utility running, so Settings can be reopened without relaunching. All entry points use the same `AppDependencies.preferences` store; no additional settings or login-item controls are implemented by the menu bar milestone.
+
 ## Window structure
 
 Use the app's native SwiftUI Settings scene with a two-column `NavigationSplitView` built from `sidebar` and `detail`. The sidebar contains a single-selection `List` with sidebar styling. Select General on first open, use stable category identifiers, and keep the selected detail title consistent with the sidebar.

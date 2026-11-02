@@ -2,7 +2,7 @@
 
 NotchMaster is an early prototype, not yet a user-facing release.
 
-The prototype supports one active, unmirrored built-in display with validated physical-notch geometry. It has temporary preview controls, automatic hover interaction, native haptic requests, one expansion speed preference, and a passive expanded clock and date. It starts hidden. The physical camera region contains no drawable pixels.
+The prototype supports one active, unmirrored built-in display with validated physical-notch geometry. It has native menu bar controls, a development verification window, automatic hover interaction, native haptic requests, one expansion speed preference, and a passive expanded clock and date. It starts hidden. The physical camera region contains no drawable pixels.
 
 ## Automated checks
 
@@ -15,9 +15,13 @@ xcodebuild -project NotchMaster.xcodeproj -scheme NotchMaster -configuration Deb
 
 Existing tests cover preferences, validated display geometry, fixed animation anchors, reversal, hover boundaries, delayed collapse, native haptic request counts, Reduce Motion, focus, click-through panel configuration, display changes, sleep, and cleanup.
 
+`NotchMenuTests` renders the actual SwiftUI menu through native `NSHostingMenu` and invokes its preview command. It checks titles against confirmed panel visibility, changes made through the shared controller, sleep and unsupported displays, failed Show requests, recovery with panel reuse, shortcuts, and continued control after closing and releasing a verification view. Native menu inspection requires macOS 14.4 or later; that suite is explicitly skipped on macOS 14.0 through 14.3 without changing the app's deployment target. Settings foreground presentation, actual status-item interaction and Quit remain manual end-to-end checks.
+
 The clock checks compare compact SwiftUI rendering with the original black shape, verify that reveal begins only after the measured content fits, check localized expanded layouts, exercise a real `NSHostingView` during panel resizing and reversal, and verify that content receives refreshed validated camera clearance. Synthetic geometry and rendered pixels do not establish physical camera alignment or perceived animation quality.
 
 Validation on 1 November 2026 passed the macOS arm64 Debug build and all 54 test functions, covering 120 cases, with Swift warnings treated as errors on macOS 27.2 and Xcode 27.2. There were no failures, skipped cases or reported runtime warnings. The built executable contains only arm64. `git diff --check` passed.
+
+Menu bar validation on 2 November 2026 passed the arm64 Debug build and all 56 test functions, covering 123 cases, with Swift warnings treated as errors on macOS 27.2 and Xcode 27.2. The native menu tests ran without skips, and the full suite reported no failures or runtime warnings. SwiftLint 0.65.1 reported zero violations across 17 Swift files; SwiftFormat 0.64.5 reported no files requiring formatting. Actual status-item appearance, Settings foreground presentation, Quit, physical notch behaviour and macOS 14 runtime behaviour still require the manual checks below.
 
 Compact rendering matched the original surface at 32, 40 and 80-point camera heights. Expanded fitting and pixel-bound checks passed for US English, UK English, German, French, Japanese and Saudi Arabic, including 40-point camera clearance. Inspected test-result snapshots showed the native 12-hour and 24-hour formats and localized date order. Native hosting-view captures confirmed hidden compact and early-expansion content, visible content near full expansion, and hidden content after reversal to compact. The pixel test freezes native animation at each sample frame; existing tests separately exercise uninterrupted native animation. PNG attachments are retained in the Xcode test results.
 
@@ -25,7 +29,7 @@ Physical camera alignment, perceived animation smoothness, preference changes in
 
 ## Current preview behaviour
 
-The project uses local ad hoc signing without a development team. Distribution signing remains undecided. Run the app from Xcode and use Show Notch Preview, then Expand and Collapse in the verification window. Expansion animates the same black panel around and below the reported physical notch, keeping its top edge and horizontal centre fixed. Collapse restores the exact compact frame. Each transition reads the latest expansion duration from Settings. Rapid reversals stop the previous animation and continue from the current size. Reduce Motion applies the target immediately, including when enabled during an animation.
+The project uses local ad hoc signing without a development team. Distribution signing remains undecided. Run the app from Xcode and click the monochrome MacBook menu bar symbol to show or hide the preview, open Settings or quit. The Show/Hide title reflects the shared controller's confirmed visibility. Closing the verification or Settings window leaves the utility running. The app retains its Dock icon, and Window > NotchMaster reopens the verification window for manual Expand and Collapse controls. Expansion animates the same black panel around and below the reported physical notch, keeping its top edge and horizontal centre fixed. Collapse restores the exact compact frame. Each transition reads the latest expansion duration from Settings. Rapid reversals stop the previous animation and continue from the current size. Reduce Motion applies the target immediately, including when enabled during an animation.
 
 The preview starts hidden, does not take keyboard focus, and passes mouse events through. Initial presentation and display changes apply validated geometry immediately. Unsupported, inactive, or mirrored built-in displays produce an explanatory message without showing a panel. Display changes cancel any animation and revalidate placement; hiding, unsupported geometry, or sleep resets expansion. After hiding, the preview must be explicitly shown again and starts compact. Use Open Settings or Command-comma to edit expansion speed, then alternate Expand and Collapse to check the new duration without restarting. Physical notch alignment, animation appearance, Spaces, and full-screen interaction still need manual hardware testing.
 
@@ -40,6 +44,16 @@ Each actual hover expansion or delayed collapse requests one immediate `.generic
 ## MacBook checks before review
 
 Use a MacBook with a physical notch and a Force Touch trackpad for the haptic checks. Assess physical feedback and perceived latency on hardware.
+
+Before the notch checks:
+
+1. Launch and confirm a monochrome MacBook menu bar symbol with a meaningful NotchMaster VoiceOver label. The menu must initially say Show Notch Preview. Show and hide from the menu, then from the verification window, reopening the menu each time to check that both agree. Compact preview visibility may be visually subtle because the camera area has no drawable pixels.
+2. Close the verification window with the preview hidden, then show the preview through the menu. Repeat with the preview already shown. Hover expansion and delayed collapse must still work. Reopen the verification window through Window > NotchMaster and check that its controls reflect the current state.
+3. Focus another app, then choose Open Settings from the menu. Settings must appear in front with the existing expansion speed preference. Close Settings and reopen it from the menu; test Command-comma while NotchMaster is active. Change the speed and confirm subsequent notch transitions use it.
+4. Sleep/wake or switch to an unsupported display configuration while the preview is shown. Reopen the menu and confirm it says Show Notch Preview; recovery requires an explicit Show after supported geometry returns. With unsupported geometry, Show must stay Show and no panel should appear; the verification window provides the reason.
+5. Quit through the menu and confirm the status item and preview disappear. Relaunch and confirm the preview starts hidden and the saved expansion speed remains. Test Command-Q separately, plus keyboard navigation and VoiceOver for the menu, in light and dark appearances.
+
+Then check the existing notch behaviour:
 
 1. Run the Debug app, show the preview, and check that compact appearance is unchanged with no text. Expand using the temporary control and by hovering. The white time and subtle date must sit below the physical camera, centred in the black area, with intact bottom corners.
 2. Test the fastest and slowest expansion speeds. Repeatedly reverse expansion and collapse at early, middle and late points. Text should fade only when it fits, disappear before the panel becomes too small, and avoid clipped glyphs or flashes.

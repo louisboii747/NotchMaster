@@ -2,7 +2,7 @@
 
 Contains the macOS application entry point and composition root.
 
-`NotchMasterApp.swift` declares the single verification window and native Settings scene. It retains `AppDependencies.swift`, which creates the shared local preferences store and injects it into Settings. The composition root also owns the manual preview controller, injects it into the shell, and supplies its SwiftUI hosting view. The panel starts hidden and compact and is created only after supported geometry is found.
+`NotchMasterApp.swift` declares the single verification window, native menu bar extra and Settings scene. It retains `AppDependencies.swift`, which creates the shared local preferences store and injects it into Settings. The composition root also owns the preview controller, injects the same instance into the shell and menu, and supplies its SwiftUI hosting view. The panel starts hidden and compact and is created only after supported geometry is found. The app delegate keeps the app running after the last window closes; the native Window menu can reopen the development window.
 
 Keep feature logic in Core and presentation in UI. AppKit window management belongs to Core; App owns the coordinator's lifetime.
 

@@ -1,6 +1,6 @@
 # Architecture direction
 
-Status: Phase 1 foundation, animated notch preview, automatic hover interaction with native haptic requests, and an expanded live clock and date are implemented. The startup, preference, and preview flows below exist; later feature sections record intended boundaries.
+Status: Phase 1 foundation, animated notch preview, automatic hover interaction with native haptic requests, an expanded live clock and date, and native menu bar controls are implemented. The startup, preference, and preview flows below exist; later feature sections record intended boundaries.
 
 ## Product boundary
 
@@ -10,7 +10,11 @@ The foundation uses one native Xcode application target, Swift 6 language mode w
 
 ## Implemented startup and preference flow
 
-`NotchMasterApp` is the `@main` SwiftUI entry point. It retains `AppDependencies` in `@State`, opens a single verification window, and declares a native `Settings` scene. The composition root creates `PreferencesStore` and `NotchWindowController`. It passes preferences explicitly through `SettingsView` to `GeneralSettingsView` and the controller to `AppShellView`. App injects a duration provider that reads the shared preferences store, plus a content factory that accepts the validated camera height and hosts UI's `NotchView`, keeping Core independent of UI view types. No panel is created until Show Notch Preview succeeds.
+`NotchMasterApp` is the `@main` SwiftUI entry point. It retains `AppDependencies` in `@State`, opens a single verification window, and declares native `MenuBarExtra` and `Settings` scenes. The composition root creates `PreferencesStore` and `NotchWindowController`. It passes preferences explicitly through `SettingsView` to `GeneralSettingsView` and the same controller to `AppShellView` and `NotchMenuView`. App injects a duration provider that reads the shared preferences store, plus a content factory that accepts the validated camera height and hosts UI's `NotchView`, keeping Core independent of UI view types. No panel is created until Show Notch Preview succeeds.
+
+The menu bar extra uses the monochrome `macbook` SF Symbol and native menu style. Its Show/Hide title reads the controller's observable `isPreviewVisible` directly, and its action calls the existing `togglePreview()`. There is no menu-owned visibility Boolean or second controller. Sleep, unsupported geometry and actions in the verification window therefore update the menu from the same confirmed state. Open Settings activates the app using `NSApplication.activate()` and invokes SwiftUI's environment `openSettings` action for the existing Settings scene. Quit calls native application termination. Both retain the standard Command-comma and Command-Q shortcuts.
+
+`NotchMasterAppDelegate`, retained through `@NSApplicationDelegateAdaptor`, returns false from `applicationShouldTerminateAfterLastWindowClosed`. Closing the verification or Settings window therefore leaves the menu bar utility and app-owned dependencies running. The app remains a regular macOS app with its Dock icon and native Window > NotchMaster command for reopening the development window. Preview visibility still starts hidden on launch, and no launch-at-login registration is implemented.
 
 The store uses Foundation `UserDefaults` for one local duration under `notchExpansionDuration`. It accepts an injected defaults instance so tests can use isolated suites. Missing, malformed, or non-finite values become 0.30 seconds. Finite values are clamped to 0.15–0.60 seconds on load and assignment, and the validated value is persisted. The store does not monitor changes made outside the running app.
 
@@ -34,7 +38,7 @@ Use dependency injection at the App boundary. Keep preferences, OS-reported stat
 
 ## Windows and display geometry
 
-`NotchWindowController` owns a lazily created borderless, non-activating `NSPanel` on the main actor. It exposes observable visibility, expansion state, and status to the temporary shell controls. Its injected display provider reads `NSScreen` snapshots; an injected content factory supplies the SwiftUI hosting view. Notification centers are injectable for lifecycle tests.
+`NotchWindowController` owns a lazily created borderless, non-activating `NSPanel` on the main actor. It exposes observable visibility, expansion state, and status to the temporary shell controls and menu bar. Its injected display provider reads `NSScreen` snapshots; an injected content factory supplies the SwiftUI hosting view. Notification centers are injectable for lifecycle tests.
 
 `DisplayGeometry` selects a single active built-in display using the public Core Graphics display identity, independent of the main or keyboard-focused screen. Mirroring is unsupported. A positive top safe-area inset and consistent auxiliary top-left and top-right rectangles must describe a central gap in global AppKit coordinates. Missing, non-finite, or inconsistent geometry is rejected with a visible explanation, without falling back to guessed coordinates or an external display.
 
@@ -140,8 +144,11 @@ Bundled modules, constrained declarative content, supported extension mechanisms
 
 ## Apple references
 
-Consulted on 28–31 October 2026. These links describe platform APIs and review requirements; features beyond the foundation and manual preview remain design proposals.
+Consulted on 28 October through 2 November 2026. These links describe platform APIs and review requirements; features beyond the implemented prototype remain design proposals.
 
+- [MenuBarExtra](https://developer.apple.com/documentation/swiftui/menubarextra)
+- [OpenSettingsAction](https://developer.apple.com/documentation/swiftui/opensettingsaction)
+- [NSApplicationDelegate last-window termination](https://developer.apple.com/documentation/appkit/nsapplicationdelegate/applicationshouldterminateafterlastwindowclosed(_:))
 - [NavigationSplitView](https://developer.apple.com/documentation/swiftui/navigationsplitview)
 - [GroupedFormStyle](https://developer.apple.com/documentation/swiftui/groupedformstyle)
 - [SMAppService](https://developer.apple.com/documentation/servicemanagement/smappservice)

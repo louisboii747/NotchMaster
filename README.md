@@ -37,7 +37,7 @@
   <a href="#availability"><img src="docs/assets/app-store-soon.svg" width="220" height="64" alt="Planned for the Mac App Store; no listing yet"></a>
 </p>
 
-> **Early prototype, not yet released.** On a supported built-in MacBook notch, NotchMaster currently offers a passive black notch preview with a live local clock and date when expanded, hover expansion and delayed collapse, adjustable animation speed, Reduce Motion support, and optional trackpad haptic requests. A temporary verification window is used to test these interactions. There is no downloadable release or plugin SDK yet. The hero artwork and remaining feature plans below show the intended direction, not functionality already shipped.
+> **Early prototype, not yet released.** On a supported built-in MacBook notch, NotchMaster currently offers a passive black notch preview with a live local clock and date when expanded, hover expansion and delayed collapse, adjustable animation speed, Reduce Motion support, and optional trackpad haptic requests. A native menu bar menu provides preview visibility, Settings and Quit controls; a temporary verification window remains available for development. There is no downloadable release or plugin SDK yet. The hero artwork and remaining feature plans below show the intended direction, not functionality already shipped.
 
 ## Features
 
@@ -49,6 +49,7 @@ NotchMaster aims to turn the MacBook notch into a useful, expandable hub. Develo
 - Live local clock and date below the camera when expanded, with localized time and date formatting.
 - Native AppKit animation, plus an expansion-speed preference saved in Settings.
 - Reduce Motion support and optional native trackpad haptic requests on hover transitions.
+- Native menu bar controls for Show/Hide Notch Preview, Open Settings and Quit, available after closing the verification window.
 - Temporary Show/Hide and Expand/Collapse controls for testing.
 
 **Planned, not implemented yet**
@@ -103,7 +104,7 @@ cd NotchMaster
 open NotchMaster.xcodeproj
 ```
 
-Build and run the focused preference, geometry, window-controller, hover, and SwiftUI content tests for Apple Silicon:
+Build and run the focused preference, geometry, window-controller, hover, SwiftUI content and menu tests for Apple Silicon:
 
 ```sh
 xcodebuild -project NotchMaster.xcodeproj -scheme NotchMaster -configuration Debug -destination 'platform=macOS,arch=arm64' build
@@ -123,7 +124,7 @@ swiftformat --lint .
 
 To apply the configured formatting locally, run `swiftformat .` and review the diff before committing. SwiftLint and SwiftFormat use the deliberately small rule sets in `.swiftlint.yml` and `.swiftformat`; extend these rules incrementally as the codebase develops.
 
-The prototype uses local ad hoc signing; distribution signing isn't configured. Its temporary verification window lets you show the notch preview and test expansion, collapse and Settings.
+The prototype uses local ad hoc signing; distribution signing isn't configured. Click the monochrome MacBook symbol in the menu bar to show or hide the preview, open Settings, or quit. The preview starts hidden and the Show/Hide title follows the controller's confirmed visibility, including after sleep or an unsupported display change. Closing the verification window leaves the menu bar utility running. The app retains its Dock icon; reopen the development window through Window > NotchMaster to test manual expansion and collapse. Open Settings also has the standard Command-comma shortcut, and Quit uses Command-Q.
 
 For live clock behaviour, hover boundaries, animation, accessibility, haptics and manual testing, see **[Prototype testing](docs/PROTOTYPE_TESTING.md)**. For implementation details, see [Architecture](docs/ARCHITECTURE.md) and the [file map](docs/STRUCTURE.md).
 
