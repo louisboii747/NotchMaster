@@ -3,7 +3,7 @@ import SwiftUI
 
 @MainActor
 struct GeneralSettingsView: View {
-    let preferences: PreferencesStore
+    @Bindable var preferences: PreferencesStore
     let loginItemService: LoginItemService
 
     var body: some View {
@@ -25,6 +25,10 @@ struct GeneralSettingsView: View {
                         .foregroundStyle(.red)
                         .accessibilityIdentifier("LoginItemError")
                 }
+
+                Toggle("Show Notch Preview on Launch", isOn: $preferences.showNotchPreviewOnLaunch)
+                    .toggleStyle(.switch)
+                    .accessibilityIdentifier("ShowNotchPreviewOnLaunch")
             } header: {
                 Text("Startup")
             } footer: {

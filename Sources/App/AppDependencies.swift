@@ -5,15 +5,22 @@ import SwiftUI
 final class AppDependencies {
     let preferences: PreferencesStore
     let loginItemService: LoginItemService
+    let batteryInformationService: BatteryInformationService
     let notchWindowController: NotchWindowController
 
-    init(defaults: UserDefaults = .standard, loginItemSystem: any LoginItemSystem = MainAppLoginItemSystem()) {
+    init(
+        defaults: UserDefaults = .standard,
+        loginItemSystem: any LoginItemSystem = MainAppLoginItemSystem(),
+        batteryInformationProvider: any BatteryInformationProvider = SystemBatteryInformationProvider(),
+        notchWindowController: NotchWindowController? = nil
+    ) {
         preferences = PreferencesStore(defaults: defaults)
         loginItemService = LoginItemService(system: loginItemSystem)
-        notchWindowController = NotchWindowController(expansionDuration: { [preferences] in
+        batteryInformationService = BatteryInformationService(provider: batteryInformationProvider)
+        self.notchWindowController = notchWindowController ?? NotchWindowController(expansionDuration: { [preferences] in
             preferences.expansionDuration
-        }) { cameraHeight in
-            NSHostingView(rootView: NotchView(cameraHeight: cameraHeight))
+        }) { [batteryInformationService] cameraHeight in
+            NSHostingView(rootView: NotchView(cameraHeight: cameraHeight, batteryService: batteryInformationService))
         }
     }
 }

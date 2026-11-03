@@ -17,6 +17,23 @@ struct PreferencesStoreTests {
         try withDefaults { defaults, _ in
             let store = PreferencesStore(defaults: defaults)
             #expect(store.expansionDuration == 0.30)
+            #expect(!store.showNotchPreviewOnLaunch)
+        }
+    }
+
+    @Test(arguments: [false, true])
+    func persistsAndReloadsPreviewOnLaunch(enabled: Bool) throws {
+        try withDefaults { defaults, suiteName in
+            let store = PreferencesStore(defaults: defaults)
+            store.expansionDuration = 0.42
+            store.showNotchPreviewOnLaunch = !enabled
+            store.showNotchPreviewOnLaunch = enabled
+            #expect(defaults.object(forKey: PreferencesStore.showNotchPreviewOnLaunchKey) as? Bool == enabled)
+
+            let reloadedDefaults = try #require(UserDefaults(suiteName: suiteName))
+            let reloaded = PreferencesStore(defaults: reloadedDefaults)
+            #expect(reloaded.showNotchPreviewOnLaunch == enabled)
+            #expect(reloaded.expansionDuration == 0.42)
         }
     }
 

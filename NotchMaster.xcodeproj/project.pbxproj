@@ -30,6 +30,8 @@
 		400000000000000000000015 /* GeneralSettingsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000018 /* GeneralSettingsTests.swift */; };
 		400000000000000000000016 /* ElasticButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000019 /* ElasticButton.swift */; };
 		400000000000000000000017 /* LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 30000000000000000000001A /* LICENSE.txt */; };
+		400000000000000000000018 /* BatteryInformationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30000000000000000000001B /* BatteryInformationService.swift */; };
+		400000000000000000000019 /* BatteryInformationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30000000000000000000001C /* BatteryInformationServiceTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -69,6 +71,8 @@
 		300000000000000000000018 /* GeneralSettingsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralSettingsTests.swift; sourceTree = "<group>"; };
 		300000000000000000000019 /* ElasticButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Controls/ElasticButton.swift; sourceTree = "<group>"; };
 		30000000000000000000001A /* LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
+		30000000000000000000001B /* BatteryInformationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryInformationService.swift; sourceTree = "<group>"; };
+		30000000000000000000001C /* BatteryInformationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryInformationServiceTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -143,6 +147,7 @@
 			isa = PBXGroup;
 			children = (
 				300000000000000000000016 /* LoginItemService.swift */,
+				30000000000000000000001B /* BatteryInformationService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -175,6 +180,7 @@
 				300000000000000000000010 /* NotchWindowControllerTests.swift */,
 				300000000000000000000012 /* NotchHoverTests.swift */,
 				300000000000000000000017 /* LoginItemServiceTests.swift */,
+				30000000000000000000001C /* BatteryInformationServiceTests.swift */,
 			);
 			path = Tests/Core;
 			sourceTree = "<group>";
@@ -353,6 +359,7 @@
 				40000000000000000000000E /* NotchHoverInteraction.swift in Sources */,
 				400000000000000000000011 /* NotchMenuView.swift in Sources */,
 				400000000000000000000013 /* LoginItemService.swift in Sources */,
+				400000000000000000000018 /* BatteryInformationService.swift in Sources */,
 				400000000000000000000016 /* ElasticButton.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -368,6 +375,7 @@
 				400000000000000000000010 /* NotchViewTests.swift in Sources */,
 				400000000000000000000012 /* NotchMenuTests.swift in Sources */,
 				400000000000000000000014 /* LoginItemServiceTests.swift in Sources */,
+				400000000000000000000019 /* BatteryInformationServiceTests.swift in Sources */,
 				400000000000000000000015 /* GeneralSettingsTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

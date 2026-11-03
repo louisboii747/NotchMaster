@@ -1,12 +1,12 @@
 # Native settings specification
 
-Status: the native Settings scene implements General's Launch at Login switch, approval guidance and error states, plus the expansion speed slider and local duration persistence. The sidebar contains General only; other categories below remain future requirements.
+Status: the native Settings scene implements General's independent Launch at Login and Show Notch Preview on Launch switches, login approval guidance and error states, plus the expansion speed slider and local preference persistence. The sidebar contains General only; other categories below remain future requirements.
 
 ## Opening Settings
 
 The native menu bar menu includes Open Settings, with Command-comma, and brings the app forward before opening the existing SwiftUI Settings scene. The foundation window's Open App Settings link and standard app Settings command remain available. Closing either window leaves the menu bar utility running, so Settings can be reopened without relaunching. All app Settings entry points use the same `AppDependencies.preferences` store and `AppDependencies.loginItemService` instance.
 
-Feature Settings in the menu bar opens the separate foundation window, also available through Window > NotchMaster. Its grouped form contains a Notch Preview feature toggle and the expansion speed preference. The toggle reflects confirmed preview visibility, stays off if showing the preview fails, and resets to off on launch. Both windows reuse the same `ExpansionSpeedSettings` section and preferences store. Show/Hide, manual Expand/Collapse and the current preview status are available directly in the menu bar.
+Feature Settings in the menu bar opens the separate foundation window, also available through Window > NotchMaster. Its grouped form contains a Notch Preview feature toggle and the expansion speed preference. The toggle reflects confirmed preview visibility, stays off if showing the preview fails, and follows the optional startup Show request without persisting visibility. Both windows reuse the same `ExpansionSpeedSettings` section and preferences store. Show/Hide, manual Expand/Collapse and the current preview status are available directly in the menu bar.
 
 ## Window structure
 
@@ -33,6 +33,7 @@ Use native `Label` rows and the user's accent colour. Verify symbol availability
 | Group | Control | Behaviour |
 | :--- | :--- | :--- |
 | Startup | **Launch at Login** · native toggle | Implemented through Core's Service Management adapter. On only for confirmed enabled status; off when unregistered. Show errors and required approval. |
+| Startup | **Show Notch Preview on Launch** · native toggle | Persisted locally, default off. Requests the existing compact preview once after launch finishes. Does not change login-item registration or current visibility. |
 | Appearance | **Dynamic Notch Expansion Speed** · native slider | Implemented slow-to-fast presentation mapped inversely to expansion duration. Duration range: 0.15–0.60 seconds, default 0.30 seconds. Clamp persisted values. |
 
 Give the slider labelled endpoints and an accessible current value. Increasing speed must shorten the duration. Reduce Motion should provide an appropriate reduced transition regardless of the stored animation preference.
@@ -41,7 +42,9 @@ Launch-at-login state comes from `SMAppService.mainApp` through `LoginItemServic
 
 When approval is required, the switch remains off and disabled, accompanied by Open Login Items Settings. This opens Apple's Login Items page through the Core adapter; the user grants approval or removes the pending item there. Returning to General Settings refreshes the status. Appearance, app activation and app-window focus notifications also refresh it without polling.
 
-Launch at Login uses the same quiet menu bar startup, with the development window available through Window > NotchMaster and the notch preview initially hidden. The current project uses ad hoc signing; validate actual login launching with a properly signed installed copy, as described in [prototype testing](PROTOTYPE_TESTING.md#launch-at-login-checks).
+Show Notch Preview on Launch remains available during pending login approval. It affects the next launch and does not change the transient foundation toggle or menu visibility immediately. Unsupported displays keep the preview hidden and report the controller's existing reason; the startup preference remains enabled. No automatic retry occurs on activation, wake or display recovery.
+
+Launch at Login uses the same startup preview preference as manual launches. Neither settings window is opened by startup preview presentation, and the development window remains available through Window > NotchMaster. The current project uses ad hoc signing; validate actual login launching with a properly signed installed copy, as described in [prototype testing](PROTOTYPE_TESTING.md#launch-at-login-checks).
 
 ## Advanced
 

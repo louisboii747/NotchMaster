@@ -1,10 +1,12 @@
 # Core
 
-Owns application state and logic. `Settings/PreferencesStore.swift` is a main-actor observable store with injected `UserDefaults`, validated expansion duration, and a computed inverse speed value. `Windowing/DisplayGeometry.swift` validates built-in notch geometry from public display APIs and derives compact and expanded frames. `Windowing/NotchWindowController.swift` owns the passive preview panel, observable visibility/expansion/status, and display/sleep handling, with injected display and content providers.
+Owns application state and logic. `Settings/PreferencesStore.swift` is a main-actor observable store with injected `UserDefaults`, validated expansion duration, a computed inverse speed value, and the persisted `showNotchPreviewOnLaunch` Boolean, which defaults to false. Startup preview intent is separate from confirmed preview visibility and login-item registration. `Windowing/DisplayGeometry.swift` validates built-in notch geometry from public display APIs and derives compact and expanded frames. `Windowing/NotchWindowController.swift` owns the passive preview panel, observable visibility/expansion/status, and display/sleep handling, with injected display and content providers.
 
 `Windowing/NotchHoverInteraction.swift` derives cached activation and exit regions and handles hover entry, delayed collapse, cancellation and manual overrides. The window controller owns its cursor sampling timer and requests native haptics only for actual hover transitions. Cursor, clock and feedback providers are injectable for tests; no new preference or input permission is required.
 
 `Services/LoginItemService.swift` owns observable login-item status, registration and unregistration, errors, refresh and the action to open Login Items settings. Its production adapter uses only `SMAppService.mainApp`; an injected `LoginItemSystem` supplies operations and status in tests. Enabled state comes from macOS, never from `PreferencesStore`. No polling or helper executable is required.
+
+`Services/BatteryInformationService.swift` owns optional read-only battery percentage and charging information. Its injected provider reads public IOKit power-source descriptions and observes changes with one main-run-loop source, without polling. Invalid or missing internal-battery data clears the reading; teardown removes observation. Battery information is transient and stores no settings.
 
 Further planned responsibilities:
 

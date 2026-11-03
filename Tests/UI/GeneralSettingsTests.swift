@@ -7,6 +7,20 @@ import Testing
 @Suite(.serialized)
 @MainActor
 struct GeneralSettingsTests {
+    @Test
+    func previewOnLaunchBindingPersistsIndependentlyOfLoginApproval() async throws {
+        let system = TestLoginItemSystem(status: .requiresApproval)
+        try await withSettings(system: system) { view, service, _ in
+            #expect(!view.preferences.showNotchPreviewOnLaunch)
+            view.$preferences.showNotchPreviewOnLaunch.wrappedValue = true
+            #expect(view.preferences.showNotchPreviewOnLaunch)
+            #expect(service.requiresApproval && !view.launchAtLogin.wrappedValue)
+            view.$preferences.showNotchPreviewOnLaunch.wrappedValue = false
+            #expect(!view.preferences.showNotchPreviewOnLaunch)
+            #expect(system.registrations == 0 && system.unregistrations == 0)
+        }
+    }
+
     @Test(arguments: [false, true])
     func foundationToggleUsesConfirmedPreviewState(supported: Bool) throws {
         let suiteName = "NotchMasterFoundationTests.\(UUID().uuidString)"

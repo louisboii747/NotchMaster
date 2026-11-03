@@ -5,7 +5,13 @@ import SwiftUI
 @MainActor
 struct NotchMasterApp: App {
     @NSApplicationDelegateAdaptor(NotchMasterAppDelegate.self) private var appDelegate
-    @State private var dependencies = AppDependencies()
+    @State private var dependencies: AppDependencies
+
+    init() {
+        let dependencies = AppDependencies()
+        _dependencies = State(initialValue: dependencies)
+        appDelegate.dependencies = dependencies
+    }
 
     var body: some Scene {
         MenuBarExtra("NotchMaster", systemImage: "macbook") {
@@ -31,6 +37,16 @@ struct NotchMasterApp: App {
 
 @MainActor
 final class NotchMasterAppDelegate: NSObject, NSApplicationDelegate {
+    var dependencies: AppDependencies?
+    private var hasFinishedLaunching = false
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        guard !hasFinishedLaunching else { return }
+        hasFinishedLaunching = true
+        guard let dependencies, dependencies.preferences.showNotchPreviewOnLaunch else { return }
+        dependencies.notchWindowController.showPreview()
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         false
     }

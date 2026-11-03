@@ -6,10 +6,52 @@ import Testing
 @Suite(.serialized)
 @MainActor
 struct NotchViewTests {
-    @Test(arguments: [CGFloat(32), CGFloat(40), CGFloat(80)])
-    func compactRenderingMatchesTheOriginalSurface(cameraHeight: CGFloat) throws {
+    @Test(arguments: [false, true])
+    func batteryFitsBesideClockWithoutMovingIt(isCharging: Bool) throws {
+        let size = CGSize(width: 380, height: 120)
+        let clock = try snapshot(expandedContent(information: nil, size: size), size: size)
+        let clockBounds = try #require(brightBounds(in: clock))
+        let image = try snapshot(expandedContent(
+            information: BatteryInformation(percentage: 62, isCharging: isCharging), size: size
+        ), size: size)
+        let bounds = try #require(brightBounds(in: image))
+        let originalClock = try #require(clock.cgImage?.cropping(to: clockBounds))
+        let retainedClock = try #require(image.cgImage?.cropping(to: clockBounds))
+
+        #expect(NSBitmapImageRep(cgImage: originalClock).tiffRepresentation == NSBitmapImageRep(cgImage: retainedClock).tiffRepresentation)
+        #expect(bounds.minX == clockBounds.minX && bounds.maxX > clockBounds.maxX)
+        #expect(bounds.minY >= 48 && bounds.maxY <= 112)
+        #expect(bounds.maxX <= 364)
+        Attachment.record(try #require(image.representation(using: .png, properties: [:])), named: "battery-\(isCharging).png")
+    }
+
+    @Test
+    func constrainedWidthOmitsBatteryWithoutHidingClock() throws {
+        let clockView = NotchClockView(date: Date(timeIntervalSince1970: 1_795_651_140))
+            .environment(\.locale, Locale(identifier: "en_GB"))
+            .environment(\.timeZone, .gmt)
+        let size = CGSize(width: ceil(NSHostingView(rootView: clockView).fittingSize.width) + 40, height: 120)
+        let clock = try snapshot(expandedContent(information: nil, size: size), size: size)
+        let image = try snapshot(expandedContent(
+            information: BatteryInformation(percentage: 100, isCharging: true), size: size
+        ), size: size)
+        #expect(brightBounds(in: clock) != nil)
+        #expect(image.tiffRepresentation == clock.tiffRepresentation)
+    }
+
+    @Test(arguments: [0, 25, 50, 75, 100], [false, true])
+    func usesAvailableBatterySymbols(percentage: Int, isCharging: Bool) {
+        let view = NotchBatteryView(information: BatteryInformation(percentage: percentage, isCharging: isCharging))
+        #expect(NSImage(systemSymbolName: view.symbolName, accessibilityDescription: nil) != nil)
+    }
+
+    @Test(arguments: [CGFloat(32), CGFloat(40), CGFloat(80)], [false, true])
+    func compactRenderingMatchesTheOriginalSurface(cameraHeight: CGFloat, isCharging: Bool) throws {
         let size = CGSize(width: 180, height: cameraHeight)
-        let compact = try snapshot(NotchView(cameraHeight: cameraHeight), size: size)
+        let provider = TestBatteryInformationProvider(information: BatteryInformation(percentage: 62, isCharging: isCharging))
+        let compact = try snapshot(NotchView(
+            cameraHeight: cameraHeight, batteryService: BatteryInformationService(provider: provider)
+        ), size: size)
         let original = try snapshot(
             UnevenRoundedRectangle(bottomLeadingRadius: 10, bottomTrailingRadius: 10, style: .continuous)
                 .fill(.black)
@@ -68,7 +110,8 @@ struct NotchViewTests {
         ) == 1)
 
         let image = try snapshot(
-            NotchView(cameraHeight: 40).environment(\.locale, locale),
+            NotchView(cameraHeight: 40, batteryService: BatteryInformationService(provider: TestBatteryInformationProvider()))
+                .environment(\.locale, locale),
             size: CGSize(width: 380, height: 120)
         )
         Attachment.record(try #require(image.representation(using: .png, properties: [:])), named: "clock-\(localeIdentifier).png")
@@ -82,12 +125,14 @@ struct NotchViewTests {
     @Test
     func hostingViewTracksAnimatedPanelResizingAndReversal() async throws {
         let display = DisplayFixture(origin: CGPoint(x: -3000, y: -3000)).geometry
+        let provider = TestBatteryInformationProvider(information: BatteryInformation(percentage: 62, isCharging: false))
+        let batteryService = BatteryInformationService(provider: provider)
         let controller = NotchWindowController(
             displays: { [display] },
             reduceMotion: { false },
             cursorPosition: { .zero }
         ) { cameraHeight in
-            NSHostingView(rootView: NotchView(cameraHeight: cameraHeight))
+            NSHostingView(rootView: NotchView(cameraHeight: cameraHeight, batteryService: batteryService))
         }
         defer { controller.hidePreview() }
         controller.showPreview()
@@ -113,6 +158,49 @@ struct NotchViewTests {
         collapse.currentProgress = 1
         #expect(try await displayedTextBounds(in: hostingView) == nil)
         #expect(hostingView.frame.size == panel.frame.size)
+    }
+
+    @Test
+    func hostingViewObservesBatteryChangesAndClearsUnavailableInformation() async throws {
+        let provider = TestBatteryInformationProvider()
+        let service = BatteryInformationService(provider: provider)
+        let controller = NotchWindowController(
+            displays: { [DisplayFixture(origin: CGPoint(x: -3000, y: -3000)).geometry] },
+            reduceMotion: { true },
+            cursorPosition: { .zero }
+        ) { cameraHeight in
+            NSHostingView(rootView: NotchView(cameraHeight: cameraHeight, batteryService: service))
+        }
+        defer { controller.hidePreview() }
+        controller.showPreview()
+        controller.toggleExpansion()
+        let content = try #require(controller.window?.contentView)
+        let original = try #require(try await displayedTextBounds(in: content))
+
+        provider.information = BatteryInformation(percentage: 62, isCharging: true)
+        provider.sendChange()
+        let withBattery = try #require(try await displayedTextBounds(in: content))
+        #expect(withBattery.minX == original.minX && withBattery.maxX > original.maxX)
+        #expect(controller.window?.contentView === content)
+
+        provider.information = nil
+        provider.sendChange()
+        #expect(try await displayedTextBounds(in: content) == original)
+        #expect(provider.reads == 3 && provider.observationStarts == 1)
+    }
+
+    private func expandedContent(information: BatteryInformation?, size: CGSize) -> some View {
+        NotchExpandedContentView(
+            date: Date(timeIntervalSince1970: 1_795_651_140),
+            batteryInformation: information,
+            panelSize: size,
+            cameraHeight: 40
+        )
+        .environment(\.locale, Locale(identifier: "en_GB"))
+        .environment(\.timeZone, .gmt)
+        .frame(width: size.width, height: size.height - 40)
+        .padding(.top, 40)
+        .background(.black)
     }
 
     private func snapshot(_ view: some View, size: CGSize) throws -> NSBitmapImageRep {

@@ -9,6 +9,92 @@ struct AppLifecycleTests {
     private static var testHostWindow: NSWindow?
 
     @Test
+    func defaultStartupDoesNotRequestPreview() throws {
+        try withStartup(previewOnLaunch: nil) { dependencies, delegate in
+            #expect(!dependencies.preferences.showNotchPreviewOnLaunch)
+            #expect(dependencies.notchWindowController.window == nil)
+            dependencies.preferences.showNotchPreviewOnLaunch = true
+            delegate.applicationDidFinishLaunching(Notification(name: NSApplication.didFinishLaunchingNotification))
+            #expect(dependencies.notchWindowController.window == nil)
+        }
+    }
+
+    @Test(arguments: [false, true], [false, true])
+    func startupUsesPreviewPreferenceIndependentlyOfLoginStatus(previewOnLaunch: Bool, loginEnabled: Bool) throws {
+        try withStartup(previewOnLaunch: previewOnLaunch, loginEnabled: loginEnabled) { dependencies, delegate in
+            let controller = dependencies.notchWindowController
+            #expect(controller.isPreviewVisible == previewOnLaunch)
+            #expect(!controller.isExpanded)
+            if previewOnLaunch {
+                let panel = try #require(controller.window)
+                #expect(panel.isVisible)
+                #expect(controller.statusMessage == "Notch preview shown on Built-in Test Display.")
+                controller.hidePreview()
+            } else {
+                #expect(controller.window == nil && controller.hoverTimer == nil)
+                #expect(controller.statusMessage == "Preview hidden. Requires a built-in display with a physical notch.")
+            }
+
+            dependencies.preferences.showNotchPreviewOnLaunch = true
+            delegate.applicationDidFinishLaunching(Notification(name: NSApplication.didFinishLaunchingNotification))
+            #expect(!controller.isPreviewVisible)
+        }
+    }
+
+    @Test
+    func unsupportedStartupKeepsFailureStatusAndDoesNotRetry() throws {
+        try withStartup(previewOnLaunch: true, supported: false) { dependencies, delegate in
+            let controller = dependencies.notchWindowController
+            #expect(!controller.isPreviewVisible && !controller.isExpanded)
+            #expect(controller.window == nil && controller.hoverTimer == nil)
+            #expect(controller.statusMessage == NotchPreviewUnavailableReason.noBuiltInDisplay.message)
+            #expect(dependencies.preferences.showNotchPreviewOnLaunch)
+
+            delegate.applicationDidFinishLaunching(Notification(name: NSApplication.didFinishLaunchingNotification))
+            #expect(controller.statusMessage == NotchPreviewUnavailableReason.noBuiltInDisplay.message)
+        }
+    }
+
+    private func withStartup(
+        previewOnLaunch: Bool?,
+        loginEnabled: Bool = false,
+        supported: Bool = true,
+        body: (AppDependencies, NotchMasterAppDelegate) throws -> Void
+    ) throws {
+        let suiteName = "NotchMasterStartupTests.\(UUID().uuidString)"
+        let defaults = try #require(UserDefaults(suiteName: suiteName))
+        defer { defaults.removePersistentDomain(forName: suiteName) }
+        if let previewOnLaunch {
+            defaults.set(previewOnLaunch, forKey: PreferencesStore.showNotchPreviewOnLaunchKey)
+        }
+        let system = TestLoginItemSystem(status: loginEnabled ? .enabled : .notRegistered)
+        var displayRequests = 0
+        let controller = NotchWindowController(
+            displays: {
+                displayRequests += 1
+                return supported ? [DisplayFixture(origin: CGPoint(x: -3000, y: -3000)).geometry] : []
+            },
+            reduceMotion: { true },
+            cursorPosition: { .zero }
+        ) { _ in NSView() }
+        defer { controller.hidePreview() }
+        let dependencies = AppDependencies(defaults: defaults, loginItemSystem: system, notchWindowController: controller)
+        let delegate = NotchMasterAppDelegate()
+        delegate.dependencies = dependencies
+        let visibleWindows = NSApp.windows.filter { $0.isVisible && $0.styleMask.contains(.titled) }
+        let keyWindow = NSApp.keyWindow
+        #expect(controller.window == nil)
+
+        delegate.applicationDidFinishLaunching(Notification(name: NSApplication.didFinishLaunchingNotification))
+        try body(dependencies, delegate)
+
+        #expect(displayRequests == (previewOnLaunch == true ? 1 : 0))
+        #expect(NSApp.windows.filter { $0.isVisible && $0.styleMask.contains(.titled) } == visibleWindows)
+        #expect(NSApp.keyWindow === keyWindow)
+        #expect(system.registrations == 0 && system.unregistrations == 0 && system.settingsOpened == 0)
+    }
+
+    @Test
     func launchKeepsDevelopmentWindowHiddenAndWindowMenuReopensIt() async throws {
         #expect(NSApp.activationPolicy() == .regular)
         #expect(!NSApp.windows.contains { $0.title == "NotchMaster" && $0.isVisible })

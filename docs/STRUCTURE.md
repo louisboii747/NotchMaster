@@ -30,7 +30,9 @@ NotchMaster/
 │   │   └── AppDependencies.swift
 │   ├── Core/
 │   │   ├── README.md
-│   │   ├── Services/LoginItemService.swift
+│   │   ├── Services/
+│   │   │   ├── LoginItemService.swift
+│   │   │   └── BatteryInformationService.swift
 │   │   ├── Settings/PreferencesStore.swift
 │   │   └── Windowing/
 │   │       ├── DisplayGeometry.swift
@@ -48,6 +50,7 @@ NotchMaster/
 │   ├── Core/
 │   │   ├── PreferencesStoreTests.swift
 │   │   ├── LoginItemServiceTests.swift
+│   │   ├── BatteryInformationServiceTests.swift
 │   │   ├── DisplayGeometryTests.swift
 │   │   ├── NotchWindowControllerTests.swift
 │   │   └── NotchHoverTests.swift
@@ -87,8 +90,8 @@ The following names describe the wider plan. Only the Swift files shown in the t
 
 | Path | Responsibility |
 | :--- | :--- |
-| `Sources/App/NotchMasterApp.swift` | App entry point, window/menu/Settings scenes and last-window lifecycle delegate. |
-| `Sources/App/AppDependencies.swift` | Compose and retain services. |
+| `Sources/App/NotchMasterApp.swift` | App entry point, window/menu/Settings scenes, one-time startup preview request and last-window lifecycle delegate. |
+| `Sources/App/AppDependencies.swift` | Compose and retain services, with an injectable preview controller for startup tests. |
 | `Sources/UI/AppShellView.swift` | Foundation feature-settings form with a confirmed preview toggle, shared expansion speed setting and app Settings link. |
 | `Sources/UI/NotchMenuView.swift` | Native menu bar Show/Hide, Expand/Collapse, preview status, feature/app Settings and Quit commands. |
 | `Sources/Core/Plugins/PluginRegistry.swift` | Plugin identities, lifecycle, and enabled state. |
@@ -97,18 +100,19 @@ The following names describe the wider plan. Only the Swift files shown in the t
 | `Sources/Core/Windowing/DisplayGeometry.swift` | Implemented built-in display selection and validated compact and expanded preview geometry. |
 | `Sources/Core/Settings/PreferencesStore.swift` | Validated local preferences and persistence. |
 | `Sources/Core/Services/LoginItemService.swift` | Implemented observable login-item status, registration, unregistration, approval and errors through an injected system adapter. |
+| `Sources/Core/Services/BatteryInformationService.swift` | Implemented read-only internal-battery snapshot, injectable provider and public IOKit change notifications. |
 | `Sources/Core/Services/EntitlementService.swift` | Verified Pro access and purchase restoration. |
 | `Sources/Core/Sync/SyncCoordinator.swift` | Opt-in iCloud preference synchronization. |
 | `Sources/UI/Settings/SettingsView.swift` | Sidebar and detail composition. |
 | `Sources/UI/Settings/SettingsCategory.swift` | Stable category identity, title, and symbol. |
-| `Sources/UI/Settings/GeneralSettingsView.swift` | Native login-item controls with lifecycle status refresh and the shared `ExpansionSpeedSettings` section used by both settings forms. |
+| `Sources/UI/Settings/GeneralSettingsView.swift` | Native login-item controls with lifecycle status refresh, the independent startup preview toggle and the shared `ExpansionSpeedSettings` section used by both settings forms. |
 | `Sources/UI/Settings/AdvancedSettingsView.swift` | Metal effect preference and capability state. |
 | `Sources/UI/Settings/InstalledPluginsView.swift` | Plugin list and lifecycle-aware toggles. |
 | `Sources/UI/Settings/PluginRow.swift` | Accessible plugin label, description, and switch. |
 | `Sources/UI/Settings/ProSyncSettingsView.swift` | Upgrade, account, and sync states. |
 | `Sources/UI/Settings/ProUpgradeCard.swift` | Native purchase presentation. |
 | `Sources/UI/Settings/AboutSettingsView.swift` | Bundle version and project information. |
-| `Sources/UI/Notch/NotchView.swift` | Implemented black surface shared by compact and expanded previews. |
+| `Sources/UI/Notch/NotchView.swift` | Implemented black surface, expanded clock/date and optional battery indicator with camera-safe fit checks. |
 | `Sources/UI/Materials/NotchMaterial.swift` | Accessible surface and effect composition. |
 
 The Xcode project, minimal test target, asset catalog, and shared build settings are included in Phase 1. Do not add empty Swift files to imply that future components already exist.
