@@ -37,7 +37,7 @@
   <a href="#availability"><img src="docs/assets/app-store-soon.svg" width="220" height="64" alt="Planned for the Mac App Store; no listing yet"></a>
 </p>
 
-> **Early prototype, not yet released.** On a supported built-in MacBook notch, NotchMaster currently offers a passive black notch preview with a live local clock and date when expanded, hover expansion and delayed collapse, adjustable animation speed, Reduce Motion support, and optional trackpad haptic requests. A native menu bar menu provides Show/Hide, Expand/Collapse, status, feature settings, app Settings and Quit controls. The foundation feature settings and app Settings remain separate windows; the foundation window stays closed at startup. There is no downloadable release or plugin SDK yet. The hero artwork and remaining feature plans below show the intended direction, not functionality already shipped.
+> **Early prototype, not yet released.** On a supported built-in MacBook notch, NotchMaster currently offers a passive black notch preview with a live local clock and date when expanded, hover expansion and delayed collapse, adjustable animation speed, Reduce Motion support, and optional trackpad haptic requests. A native menu bar menu provides Expand/Collapse, status, Settings and Quit controls. One Settings window combines General and Features, with Automatic, Light and Dark appearance. Settings stays closed at startup. There is no downloadable release or plugin SDK yet. The hero artwork and remaining feature plans below show the intended direction, not functionality already shipped.
 
 ## Features
 
@@ -50,10 +50,10 @@ NotchMaster aims to turn the MacBook notch into a useful, expandable hub. Develo
 - Read-only battery percentage and charging indicator beside the expanded clock, updated on power-source changes.
 - Native AppKit animation, plus an expansion-speed preference saved in Settings.
 - Reduce Motion support and optional native trackpad haptic requests on hover transitions.
-- Native menu bar controls for Show/Hide, Expand/Collapse, preview status, Feature Settings, app Settings and Quit, available with both windows closed.
+- Native menu bar controls for Expand/Collapse, preview status, Settings and Quit, available with Settings closed.
 - Launch at Login in General Settings, backed by macOS registration status with approval guidance and visible errors.
-- Optional Show Notch Preview on Launch preference in General Settings, saved locally and off by default.
-- A separate foundation feature settings form with a confirmed preview toggle and the shared expansion speed preference.
+- The island is available automatically while the app runs, with hover expansion and automatic wake/display recovery.
+- One Settings window for General and Features, with Automatic, Light and Dark appearance saved locally.
 
 **Planned, not implemented yet**
 
@@ -127,13 +127,15 @@ swiftformat --lint .
 
 To apply the configured formatting locally, run `swiftformat .` and review the diff before committing. SwiftLint and SwiftFormat use the deliberately small rule sets in `.swiftlint.yml` and `.swiftformat`; extend these rules incrementally as the codebase develops.
 
-The prototype uses local ad hoc signing; distribution signing isn't configured. Launch leaves the foundation window closed and the notch preview hidden by default. Click the monochrome MacBook symbol in the menu bar to show or hide the preview, expand or collapse it, read its status, open either settings window, or quit. Expansion is disabled while the preview is hidden. Feature Settings opens the foundation form for the preview toggle and expansion speed; Window > NotchMaster also opens that form. Open Settings opens the separate app Settings window and retains Command-comma. Both windows share the saved expansion speed preference. Closing both windows leaves the menu bar utility running, with its Dock icon retained. Quit uses Command-Q.
+The prototype uses local ad hoc signing; distribution signing isn't configured. Launch leaves Settings closed and makes the compact island available immediately on a supported display. Hover over the notch to expand it. Use the monochrome MacBook menu bar icon to expand/collapse, read status, open Settings or quit. Open Settings and Command-comma reuse one window. General contains startup and appearance preferences; Features contains island status and expansion speed. Closing Settings leaves the utility and its Dock icon running. Quit uses Command-Q.
 
-Settings > General > Startup includes Show Notch Preview on Launch, independent of Launch at Login. It defaults to off and is saved locally. When enabled, the app requests the existing compact preview once after launch finishes, without opening either settings window. Unsupported displays keep the preview hidden and report the existing reason in the menu status row and foundation form. Changing this preference affects the next launch, not current visibility. Manual Show/Hide remains independent. Sleep or unsupported geometry still requires an explicit Show after recovery. See [startup preview testing](docs/PROTOTYPE_TESTING.md#show-notch-preview-on-launch-checks).
+Settings > General > Appearance offers Automatic, Light and Dark. Automatic defaults to the macOS appearance and follows changes while the window is open. Light and Dark override the entire Settings window. The selection persists across launches. The passive black notch preview retains its existing colours.
+
+The island needs no enable switch or startup preview preference. It becomes available after launch, expands when the pointer enters the notch area, and collapses after the pointer leaves. Sleep temporarily suspends it; wake or a supported-display change restores compact presentation automatically. Unsupported, mirrored or external-only display configurations remain unavailable, with the reason visible in the menu and Features page. Existing saved startup-preview values are ignored. See [automatic island testing](docs/PROTOTYPE_TESTING.md#automatic-island-availability-checks).
 
 General Settings includes a native Launch at Login switch. It is off when macOS reports no registration, and on only when macOS confirms the app is enabled. Approval-required status offers Open Login Items Settings. Status refreshes when Settings appears and when the app or a window becomes active. No login Boolean is stored in preferences. Test actual login launching with a properly signed installed copy at a stable path; an ad hoc Xcode build does not establish that behaviour. See [login-item testing](docs/PROTOTYPE_TESTING.md#launch-at-login-checks).
 
-The foundation window's Open App Settings link uses a small macOS adaptation of [SwiftPieces ElasticButton](https://swiftpieces.com/docs/components/controls/elastic-button), retaining native Liquid Glass buttons on macOS 26 and later and native bordered buttons on earlier systems. Reduce Motion removes the press scaling, and Reduce Transparency selects the bordered treatment. The adapted component has a separate [SwiftPieces licence](SwiftPieces/LICENSE.txt).
+The local macOS adaptation of [SwiftPieces ElasticButton](https://swiftpieces.com/docs/components/controls/elastic-button) remains available as source under its separate [SwiftPieces licence](SwiftPieces/LICENSE.txt). Settings uses native form controls.
 
 The expanded notch includes a subtle battery icon and localized percentage beside the centred clock and date. It shows a static bolt only while macOS reports charging. Missing battery information or insufficient space omits the indicator while preserving the clock. Battery updates use public IOKit power-source notifications without a polling timer; compact appearance is unchanged.
 

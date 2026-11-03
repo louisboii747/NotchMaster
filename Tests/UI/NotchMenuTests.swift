@@ -9,54 +9,52 @@ struct AppLifecycleTests {
     private static var testHostWindow: NSWindow?
 
     @Test
-    func defaultStartupDoesNotRequestPreview() throws {
-        try withStartup(previewOnLaunch: nil) { dependencies, delegate in
-            #expect(!dependencies.preferences.showNotchPreviewOnLaunch)
-            #expect(dependencies.notchWindowController.window == nil)
-            dependencies.preferences.showNotchPreviewOnLaunch = true
+    func defaultStartupMakesIslandAvailable() throws {
+        try withStartup { dependencies, delegate in
+            let controller = dependencies.notchWindowController
+            let panel = try #require(controller.window)
+            let timer = try #require(controller.hoverTimer)
+            #expect(controller.isPreviewVisible && panel.isVisible && !controller.isExpanded)
+            #expect(timer.isValid)
             delegate.applicationDidFinishLaunching(Notification(name: NSApplication.didFinishLaunchingNotification))
-            #expect(dependencies.notchWindowController.window == nil)
+            #expect(controller.window === panel && controller.hoverTimer === timer)
         }
     }
 
     @Test(arguments: [false, true], [false, true])
-    func startupUsesPreviewPreferenceIndependentlyOfLoginStatus(previewOnLaunch: Bool, loginEnabled: Bool) throws {
-        try withStartup(previewOnLaunch: previewOnLaunch, loginEnabled: loginEnabled) { dependencies, delegate in
+    func startupIgnoresLegacyToggleAndLoginStatus(legacyPreviewOnLaunch: Bool, loginEnabled: Bool) throws {
+        try withStartup(legacyPreviewOnLaunch: legacyPreviewOnLaunch, loginEnabled: loginEnabled) { dependencies, _ in
             let controller = dependencies.notchWindowController
-            #expect(controller.isPreviewVisible == previewOnLaunch)
-            #expect(!controller.isExpanded)
-            if previewOnLaunch {
-                let panel = try #require(controller.window)
-                #expect(panel.isVisible)
-                #expect(controller.statusMessage == "Notch preview shown on Built-in Test Display.")
-                controller.hidePreview()
-            } else {
-                #expect(controller.window == nil && controller.hoverTimer == nil)
-                #expect(controller.statusMessage == "Preview hidden. Requires a built-in display with a physical notch.")
-            }
-
-            dependencies.preferences.showNotchPreviewOnLaunch = true
-            delegate.applicationDidFinishLaunching(Notification(name: NSApplication.didFinishLaunchingNotification))
-            #expect(!controller.isPreviewVisible)
+            #expect(controller.isPreviewVisible && !controller.isExpanded)
+            #expect(controller.hoverTimer?.isValid == true)
         }
     }
 
     @Test
-    func unsupportedStartupKeepsFailureStatusAndDoesNotRetry() throws {
-        try withStartup(previewOnLaunch: true, supported: false) { dependencies, delegate in
+    func unsupportedStartupReportsReasonWithoutRepeatedLaunchRequests() throws {
+        try withStartup(supported: false) { dependencies, delegate in
             let controller = dependencies.notchWindowController
             #expect(!controller.isPreviewVisible && !controller.isExpanded)
             #expect(controller.window == nil && controller.hoverTimer == nil)
             #expect(controller.statusMessage == NotchPreviewUnavailableReason.noBuiltInDisplay.message)
-            #expect(dependencies.preferences.showNotchPreviewOnLaunch)
-
             delegate.applicationDidFinishLaunching(Notification(name: NSApplication.didFinishLaunchingNotification))
             #expect(controller.statusMessage == NotchPreviewUnavailableReason.noBuiltInDisplay.message)
         }
     }
 
+    @Test
+    func terminationStopsIslandAndHoverTracking() throws {
+        try withStartup { dependencies, delegate in
+            let controller = dependencies.notchWindowController
+            let timer = try #require(controller.hoverTimer)
+            delegate.applicationWillTerminate(Notification(name: NSApplication.willTerminateNotification))
+            #expect(!controller.isPreviewVisible && !controller.isExpanded)
+            #expect(controller.hoverTimer == nil && !timer.isValid)
+        }
+    }
+
     private func withStartup(
-        previewOnLaunch: Bool?,
+        legacyPreviewOnLaunch: Bool? = nil,
         loginEnabled: Bool = false,
         supported: Bool = true,
         body: (AppDependencies, NotchMasterAppDelegate) throws -> Void
@@ -64,8 +62,8 @@ struct AppLifecycleTests {
         let suiteName = "NotchMasterStartupTests.\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suiteName))
         defer { defaults.removePersistentDomain(forName: suiteName) }
-        if let previewOnLaunch {
-            defaults.set(previewOnLaunch, forKey: PreferencesStore.showNotchPreviewOnLaunchKey)
+        if let legacyPreviewOnLaunch {
+            defaults.set(legacyPreviewOnLaunch, forKey: "showNotchPreviewOnLaunch")
         }
         let system = TestLoginItemSystem(status: loginEnabled ? .enabled : .notRegistered)
         var displayRequests = 0
@@ -77,7 +75,7 @@ struct AppLifecycleTests {
             reduceMotion: { true },
             cursorPosition: { .zero }
         ) { _ in NSView() }
-        defer { controller.hidePreview() }
+        defer { controller.stop() }
         let dependencies = AppDependencies(defaults: defaults, loginItemSystem: system, notchWindowController: controller)
         let delegate = NotchMasterAppDelegate()
         delegate.dependencies = dependencies
@@ -88,16 +86,17 @@ struct AppLifecycleTests {
         delegate.applicationDidFinishLaunching(Notification(name: NSApplication.didFinishLaunchingNotification))
         try body(dependencies, delegate)
 
-        #expect(displayRequests == (previewOnLaunch == true ? 1 : 0))
+        #expect(displayRequests == 1)
         #expect(NSApp.windows.filter { $0.isVisible && $0.styleMask.contains(.titled) } == visibleWindows)
         #expect(NSApp.keyWindow === keyWindow)
         #expect(system.registrations == 0 && system.unregistrations == 0 && system.settingsOpened == 0)
     }
 
     @Test
-    func launchKeepsDevelopmentWindowHiddenAndWindowMenuReopensIt() async throws {
+    func launchKeepsSettingsHiddenWithoutADevelopmentWindow() throws {
         #expect(NSApp.activationPolicy() == .regular)
-        #expect(!NSApp.windows.contains { $0.title == "NotchMaster" && $0.isVisible })
+        #expect(!NSApp.windows.contains { $0.isVisible && $0.styleMask.contains(.titled) })
+        #expect(NSApp.windowsMenu?.items.contains { $0.title == "NotchMaster" } != true)
         let hostWindow = NSWindow(
             contentRect: CGRect(x: -3000, y: -3000, width: 100, height: 100),
             styleMask: [.titled], backing: .buffered, defer: false
@@ -106,23 +105,7 @@ struct AppLifecycleTests {
         hostWindow.isRestorable = false
         Self.testHostWindow = hostWindow
         hostWindow.orderFront(nil)
-
-        let menu = try #require(NSApp.windowsMenu)
-        let commandIndex = try #require(menu.items.firstIndex { $0.title == "NotchMaster" })
-        menu.performActionForItem(at: commandIndex)
-        try await Task.sleep(for: .milliseconds(30))
-        let window = try #require(NSApp.windows.first { $0.title == "NotchMaster" && $0.isVisible })
-        defer { window.close() }
-
-        #expect(!window.isRestorable)
-        #expect(window.contentView != nil)
-        window.close()
-        #expect(!window.isVisible)
         #expect(NSApp.delegate?.applicationShouldTerminateAfterLastWindowClosed?(NSApp) == false)
-        menu.performActionForItem(at: commandIndex)
-        try await Task.sleep(for: .milliseconds(30))
-        #expect(NSApp.windows.first { $0.title == "NotchMaster" && $0.isVisible } === window)
-        #expect(!window.isRestorable)
     }
 }
 
@@ -138,77 +121,66 @@ struct AppLifecycleTests {
 @MainActor
 struct NotchMenuTests {
     @Test
-    func featureSettingsAndAppSettingsRemainSeparateWindows() async throws {
+    func allSettingsCommandsReuseOneWindow() async throws {
         guard #available(macOS 14.4, *) else { return }
         let controller = NotchWindowController(displays: { [] }) { _ in NSView() }
         let menu = NSHostingMenu(rootView: NotchMenuView(notchWindowController: controller))
-        try await expectPreviewTitle("Show Notch Preview", in: menu)
-
-        let featureCommand = try #require(menu.items.firstIndex { $0.title == "Feature Settings…" })
-        menu.performActionForItem(at: featureCommand)
-        try await Task.sleep(for: .milliseconds(30))
-        let foundationWindow = try #require(NSApp.windows.first { $0.title == "NotchMaster" && $0.isVisible })
-        defer { foundationWindow.close() }
+        try await expectExpansionTitle("Expand Notch Preview", in: menu)
+        #expect(!menu.items.contains { $0.title == "Feature Settings…" })
 
         let settingsCommand = try #require(menu.items.firstIndex { $0.title == "Open Settings…" })
         menu.performActionForItem(at: settingsCommand)
-        try await Task.sleep(for: .milliseconds(30))
+        try await Task.sleep(for: .milliseconds(50))
         let settingsWindow = try #require(NSApp.windows.first {
-            $0.isVisible && $0 !== foundationWindow && $0.title != "NotchMaster Test Host" && $0.styleMask.contains(.titled)
+            $0.isVisible && $0.title != "NotchMaster Test Host" && $0.styleMask.contains(.titled)
         })
         defer { settingsWindow.close() }
-        #expect(foundationWindow.isVisible)
 
-        menu.performActionForItem(at: featureCommand)
-        try await Task.sleep(for: .milliseconds(30))
-        #expect(NSApp.windows.filter { $0.title == "NotchMaster" && $0.isVisible }.count == 1)
+        menu.performActionForItem(at: settingsCommand)
+        try await Task.sleep(for: .milliseconds(50))
+        #expect(NSApp.windows.filter {
+            $0.isVisible && $0.title != "NotchMaster Test Host" && $0.styleMask.contains(.titled)
+        } == [settingsWindow])
+
+        settingsWindow.close()
+        #expect(!settingsWindow.isVisible)
+        let appMenu = try #require(NSApp.mainMenu?.items.first?.submenu)
+        let appSettingsCommand = try #require(appMenu.items.firstIndex { $0.keyEquivalent == "," })
+        appMenu.performActionForItem(at: appSettingsCommand)
+        try await Task.sleep(for: .milliseconds(50))
         #expect(settingsWindow.isVisible)
         #expect(controller.window == nil && !controller.isPreviewVisible)
     }
 
     @Test
-    func menuControlsExpansionAndTracksExternalStateChanges() async throws {
+    func menuControlsExpansionOfAutomaticallyAvailableIsland() async throws {
         guard #available(macOS 14.4, *) else { return }
         let controller = NotchWindowController(
             displays: { [DisplayFixture(origin: CGPoint(x: -3000, y: -3000)).geometry] },
             reduceMotion: { true },
             cursorPosition: { .zero }
         ) { _ in NSView() }
-        defer { controller.hidePreview() }
+        defer { controller.stop() }
+        controller.start()
         let menu = NSHostingMenu(rootView: NotchMenuView(notchWindowController: controller))
 
-        try await expectPreviewTitle("Show Notch Preview", in: menu)
-        #expect(menu.items[1].title == "Expand Notch Preview")
-        #expect(!menu.items[1].isEnabled)
-        menu.performActionForItem(at: 1)
-        #expect(controller.window == nil && !controller.isExpanded)
-
+        try await expectExpansionTitle("Expand Notch Preview", in: menu)
+        #expect(menu.items[0].isEnabled)
         menu.performActionForItem(at: 0)
-        try await expectPreviewTitle("Hide Notch Preview", in: menu)
-        #expect(menu.items[1].isEnabled)
-        menu.performActionForItem(at: 1)
-        try await expectPreviewTitle("Hide Notch Preview", in: menu)
+        try await expectExpansionTitle("Collapse Notch Preview", in: menu)
         #expect(controller.isExpanded)
-        #expect(menu.items[1].title == "Collapse Notch Preview")
-
         controller.toggleExpansion()
-        try await expectPreviewTitle("Hide Notch Preview", in: menu)
-        #expect(menu.items[1].title == "Expand Notch Preview")
-        controller.toggleExpansion()
-        try await expectPreviewTitle("Hide Notch Preview", in: menu)
-        #expect(menu.items[1].title == "Collapse Notch Preview")
-        menu.performActionForItem(at: 1)
-        try await expectPreviewTitle("Hide Notch Preview", in: menu)
-        #expect(!controller.isExpanded)
-        #expect(menu.items[1].title == "Expand Notch Preview")
+        try await expectExpansionTitle("Expand Notch Preview", in: menu)
         menu.performActionForItem(at: 0)
-        try await expectPreviewTitle("Show Notch Preview", in: menu)
-        #expect(!menu.items[1].isEnabled)
-        #expect(menu.items[2].title == controller.statusMessage)
+        try await expectExpansionTitle("Collapse Notch Preview", in: menu)
+        menu.performActionForItem(at: 0)
+        try await expectExpansionTitle("Expand Notch Preview", in: menu)
+        #expect(!controller.isExpanded && controller.isPreviewVisible)
+        #expect(!menu.items.contains { $0.title == "Show Notch Preview" || $0.title == "Hide Notch Preview" })
     }
 
     @Test(arguments: [NSWorkspace.willSleepNotification, NSApplication.didChangeScreenParametersNotification])
-    func menuTracksConfirmedVisibilityAndLifecycleChanges(_ notification: Notification.Name) async throws {
+    func menuTracksAutomaticLifecycleRecovery(_ notification: Notification.Name) async throws {
         guard #available(macOS 14.4, *) else { return }
         let notifications = NotificationCenter()
         let provider = MenuDisplayProviderFixture()
@@ -218,50 +190,37 @@ struct NotchMenuTests {
             workspaceNotificationCenter: notifications,
             cursorPosition: { .zero }
         ) { _ in NSView() }
-        defer { controller.hidePreview() }
-        let menu = NSHostingMenu(rootView: NotchMenuView(notchWindowController: controller))
-
-        try await expectPreviewTitle("Show Notch Preview", in: menu)
-        menu.performActionForItem(at: 0)
-        try await expectPreviewTitle("Hide Notch Preview", in: menu)
+        defer { controller.stop() }
+        controller.start()
         let panel = try #require(controller.window)
-        #expect(controller.isPreviewVisible && panel.isVisible)
-
-        controller.togglePreview()
-        try await expectPreviewTitle("Show Notch Preview", in: menu)
-        controller.togglePreview()
-        try await expectPreviewTitle("Hide Notch Preview", in: menu)
-        #expect(controller.window === panel)
+        let menu = NSHostingMenu(rootView: NotchMenuView(notchWindowController: controller))
+        try await expectExpansionTitle("Expand Notch Preview", in: menu)
+        #expect(menu.items[0].isEnabled)
 
         provider.displays = []
         notifications.post(name: notification, object: nil)
-        try await expectPreviewTitle("Show Notch Preview", in: menu)
-        #expect(!controller.isPreviewVisible && !panel.isVisible)
-
+        try await expectExpansionTitle("Expand Notch Preview", in: menu)
+        #expect(!controller.isPreviewVisible && !panel.isVisible && !menu.items[0].isEnabled)
+        #expect(menu.items[1].title == controller.statusMessage)
         menu.performActionForItem(at: 0)
-        try await expectPreviewTitle("Show Notch Preview", in: menu)
-        #expect(!controller.isPreviewVisible && !panel.isVisible)
-        #expect(controller.statusMessage == NotchPreviewUnavailableReason.noBuiltInDisplay.message)
-        #expect(menu.items[2].title == controller.statusMessage)
-        #expect(!menu.items[1].isEnabled)
+        #expect(!controller.isExpanded)
 
         provider.displays = [DisplayFixture(origin: CGPoint(x: -3000, y: -3000)).geometry]
-        menu.performActionForItem(at: 0)
-        try await expectPreviewTitle("Hide Notch Preview", in: menu)
-        #expect(controller.window === panel)
-        menu.performActionForItem(at: 0)
-        try await expectPreviewTitle("Show Notch Preview", in: menu)
-        #expect(!panel.isVisible)
+        notifications.post(name: NSWorkspace.didWakeNotification, object: nil)
+        notifications.post(name: NSApplication.didChangeScreenParametersNotification, object: nil)
+        try await expectExpansionTitle("Expand Notch Preview", in: menu)
+        #expect(controller.window === panel && controller.isPreviewVisible && panel.isVisible)
+        #expect(menu.items[0].isEnabled)
     }
 
     @Test
-    func closingFoundationWindowKeepsMenuAndSharedControllerOperational() async throws {
+    func closingSettingsWindowKeepsMenuAndSharedControllerOperational() async throws {
         guard #available(macOS 14.4, *) else { return }
         let controller = NotchWindowController(
             displays: { [DisplayFixture(origin: CGPoint(x: -3000, y: -3000)).geometry] },
             cursorPosition: { .zero }
         ) { _ in NSView() }
-        defer { controller.hidePreview() }
+        defer { controller.stop() }
         let menu = NSHostingMenu(rootView: NotchMenuView(notchWindowController: controller))
         let verificationWindow = NSWindow(
             contentRect: CGRect(x: -3000, y: -3000, width: 480, height: 280),
@@ -271,32 +230,31 @@ struct NotchMenuTests {
         let suiteName = "NotchMasterMenuTests.\(UUID().uuidString)"
         let defaults = try #require(UserDefaults(suiteName: suiteName))
         defer { defaults.removePersistentDomain(forName: suiteName) }
-        verificationWindow.contentView = NSHostingView(rootView: AppShellView(
-            preferences: PreferencesStore(defaults: defaults), notchWindowController: controller
+        verificationWindow.contentView = NSHostingView(rootView: SettingsView(
+            preferences: PreferencesStore(defaults: defaults),
+            loginItemService: LoginItemService(system: TestLoginItemSystem()),
+            notchWindowController: controller
         ))
-        controller.showPreview()
+        controller.start()
         let panel = try #require(controller.window)
 
         verificationWindow.close()
         verificationWindow.contentView = nil
 
         #expect(NSApp.delegate?.applicationShouldTerminateAfterLastWindowClosed?(NSApp) == false)
-        try await expectPreviewTitle("Hide Notch Preview", in: menu)
+        try await expectExpansionTitle("Expand Notch Preview", in: menu)
+        #expect(controller.window === panel && panel.isVisible && controller.hoverTimer?.isValid == true)
         menu.performActionForItem(at: 0)
-        try await expectPreviewTitle("Show Notch Preview", in: menu)
-        #expect(!panel.isVisible)
-        menu.performActionForItem(at: 0)
-        try await expectPreviewTitle("Hide Notch Preview", in: menu)
-        #expect(controller.window === panel && panel.isVisible)
+        try await expectExpansionTitle("Collapse Notch Preview", in: menu)
+        #expect(controller.isExpanded)
         #expect(menu.items.map(\.title) == [
-            "Hide Notch Preview", "Expand Notch Preview", controller.statusMessage, "",
-            "Feature Settings…", "Open Settings…", "Quit NotchMaster"
+            "Collapse Notch Preview", controller.statusMessage, "", "Open Settings…", "Quit NotchMaster"
         ])
-        #expect(menu.items[5].keyEquivalent == ",")
-        #expect(menu.items[6].keyEquivalent == "q")
+        #expect(menu.items[3].keyEquivalent == ",")
+        #expect(menu.items[4].keyEquivalent == "q")
     }
 
-    private func expectPreviewTitle(_ title: String, in menu: NSMenu) async throws {
+    private func expectExpansionTitle(_ title: String, in menu: NSMenu) async throws {
         try await Task.sleep(for: .milliseconds(30))
         menu.update()
         #expect(menu.items.first?.title == title)

@@ -18,6 +18,9 @@ final class NotchWindowController: NSWindowController {
     private let notificationCenter: NotificationCenter
     private let workspaceNotificationCenter: NotificationCenter
     private var presentedDisplay: DisplayGeometry?
+    private var isRunning = false
+    private var isSystemSleeping = false
+    private var isDisplaySleeping = false
     @ObservationIgnored private var contentCameraHeight: CGFloat?
     @ObservationIgnored private(set) var frameAnimation: NotchFrameAnimation?
     @ObservationIgnored private(set) var hoverTimer: Timer?
@@ -55,6 +58,9 @@ final class NotchWindowController: NSWindowController {
         for name in [NSWorkspace.willSleepNotification, NSWorkspace.screensDidSleepNotification] {
             workspaceNotificationCenter.addObserver(self, selector: #selector(sleepStarted), name: name, object: nil)
         }
+        for name in [NSWorkspace.didWakeNotification, NSWorkspace.screensDidWakeNotification] {
+            workspaceNotificationCenter.addObserver(self, selector: #selector(sleepEnded), name: name, object: nil)
+        }
         workspaceNotificationCenter.addObserver(
             self,
             selector: #selector(accessibilityDisplayOptionsChanged),
@@ -83,7 +89,19 @@ final class NotchWindowController: NSWindowController {
         }
     }
 
+    func start() {
+        guard !isRunning else { return }
+        isRunning = true
+        showPreview()
+    }
+
+    func stop() {
+        isRunning = false
+        hidePreview()
+    }
+
     func showPreview() {
+        guard !isSystemSleeping, !isDisplaySleeping else { return }
         presentPreview(isExpanded: isExpanded)
     }
 
@@ -211,14 +229,28 @@ final class NotchWindowController: NSWindowController {
     }
 
     @objc private func displayConfigurationChanged(_ notification: Notification) {
-        guard isPreviewVisible else { return }
+        guard isRunning || isPreviewVisible, !isSystemSleeping, !isDisplaySleeping else { return }
         stopHoverTracking()
         showPreview()
     }
 
     @objc private func sleepStarted(_ notification: Notification) {
-        guard isPreviewVisible else { return }
+        if notification.name == NSWorkspace.willSleepNotification {
+            isSystemSleeping = true
+        } else {
+            isDisplaySleeping = true
+        }
         hidePreview()
+    }
+
+    @objc private func sleepEnded(_ notification: Notification) {
+        if notification.name == NSWorkspace.didWakeNotification {
+            isSystemSleeping = false
+        } else {
+            isDisplaySleeping = false
+        }
+        guard isRunning, !isPreviewVisible else { return }
+        showPreview()
     }
 
     @objc private func accessibilityDisplayOptionsChanged(_ notification: Notification) {

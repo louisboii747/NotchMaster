@@ -1,20 +1,26 @@
 import Foundation
 import Observation
 
+enum AppAppearance: String, CaseIterable {
+    case automatic
+    case light
+    case dark
+}
+
 @MainActor
 @Observable
 final class PreferencesStore {
     static let expansionDurationKey = "notchExpansionDuration"
-    static let showNotchPreviewOnLaunchKey = "showNotchPreviewOnLaunch"
+    static let appearanceKey = "appAppearance"
     static let defaultExpansionDuration: TimeInterval = 0.30
     static let expansionDurationRange: ClosedRange<TimeInterval> = 0.15...0.60
 
     private let defaults: UserDefaults
     private var storedExpansionDuration: TimeInterval
 
-    var showNotchPreviewOnLaunch: Bool {
+    var appearance: AppAppearance {
         didSet {
-            defaults.set(showNotchPreviewOnLaunch, forKey: Self.showNotchPreviewOnLaunchKey)
+            defaults.set(appearance.rawValue, forKey: Self.appearanceKey)
         }
     }
 
@@ -38,9 +44,10 @@ final class PreferencesStore {
 
     init(defaults: UserDefaults) {
         self.defaults = defaults
-        showNotchPreviewOnLaunch = defaults.bool(forKey: Self.showNotchPreviewOnLaunchKey)
+        appearance = defaults.string(forKey: Self.appearanceKey).flatMap(AppAppearance.init(rawValue:)) ?? .automatic
         let persisted = defaults.object(forKey: Self.expansionDurationKey) as? Double
         storedExpansionDuration = Self.validatedDuration(persisted ?? Self.defaultExpansionDuration)
+        defaults.set(appearance.rawValue, forKey: Self.appearanceKey)
         defaults.set(storedExpansionDuration, forKey: Self.expansionDurationKey)
     }
 

@@ -19,19 +19,14 @@ struct NotchMasterApp: App {
         }
         .menuBarExtraStyle(.menu)
 
-        Window("NotchMaster", id: "development") {
-            AppShellView(
+        Settings {
+            SettingsView(
                 preferences: dependencies.preferences,
+                loginItemService: dependencies.loginItemService,
                 notchWindowController: dependencies.notchWindowController
             )
-                .background { DevelopmentWindowRestoration().frame(width: 0, height: 0) }
         }
-        .defaultSize(width: 520, height: 380)
-
-        Settings {
-            SettingsView(preferences: dependencies.preferences, loginItemService: dependencies.loginItemService)
-        }
-        .defaultSize(width: 520, height: 380)
+        .defaultSize(width: 680, height: 520)
     }
 }
 
@@ -43,24 +38,14 @@ final class NotchMasterAppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         guard !hasFinishedLaunching else { return }
         hasFinishedLaunching = true
-        guard let dependencies, dependencies.preferences.showNotchPreviewOnLaunch else { return }
-        dependencies.notchWindowController.showPreview()
+        dependencies?.notchWindowController.start()
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        dependencies?.notchWindowController.stop()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         false
-    }
-}
-
-private struct DevelopmentWindowRestoration: NSViewRepresentable {
-    func makeNSView(context: Context) -> WindowView { WindowView() }
-
-    func updateNSView(_ nsView: WindowView, context: Context) {}
-
-    final class WindowView: NSView {
-        override func viewDidMoveToWindow() {
-            super.viewDidMoveToWindow()
-            window?.isRestorable = false
-        }
     }
 }

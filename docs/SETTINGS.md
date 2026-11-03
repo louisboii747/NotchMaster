@@ -1,12 +1,12 @@
 # Native settings specification
 
-Status: the native Settings scene implements General's independent Launch at Login and Show Notch Preview on Launch switches, login approval guidance and error states, plus the expansion speed slider and local preference persistence. The sidebar contains General only; other categories below remain future requirements.
+Status: one native Settings window combines General and Features. General implements Launch at Login and Automatic/Light/Dark appearance. Features implements island status and expansion speed. Other categories below remain future requirements.
 
 ## Opening Settings
 
-The native menu bar menu includes Open Settings, with Command-comma, and brings the app forward before opening the existing SwiftUI Settings scene. The foundation window's Open App Settings link and standard app Settings command remain available. Closing either window leaves the menu bar utility running, so Settings can be reopened without relaunching. All app Settings entry points use the same `AppDependencies.preferences` store and `AppDependencies.loginItemService` instance.
+Open Settings in the menu bar, the standard app Settings command and Command-comma all open or focus the same SwiftUI Settings scene. The former Feature Settings command and separate development window have been removed. Closing Settings leaves the menu bar utility running. All controls use the existing `AppDependencies` preferences, login service and preview controller.
 
-Feature Settings in the menu bar opens the separate foundation window, also available through Window > NotchMaster. Its grouped form contains a Notch Preview feature toggle and the expansion speed preference. The toggle reflects confirmed preview visibility, stays off if showing the preview fails, and follows the optional startup Show request without persisting visibility. Both windows reuse the same `ExpansionSpeedSettings` section and preferences store. Show/Hide, manual Expand/Collapse and the current preview status are available directly in the menu bar.
+Manual Expand/Collapse and confirmed island status remain available in the menu bar. The island becomes available automatically after launch, expands on hover and recovers after wake or supported-display changes. Neither Settings nor the menu has an availability switch.
 
 ## Window structure
 
@@ -14,13 +14,14 @@ Use the app's native SwiftUI Settings scene with a two-column `NavigationSplitVi
 
 The detail canvas uses `Form` with `.formStyle(.grouped)` and native `Section` grouping. Let SwiftUI manage row insets, form spacing, separators, selection treatment, control sizes, and window appearance. Do not introduce custom spacing frameworks, hand-drawn switch controls, simulated traffic lights, or a replacement navigation system.
 
-Follow the system's current appearance rather than freeze a pixel copy of one macOS release. The result should feel at home beside System Settings while remaining a normal independent app.
+Use native semantic colours in both appearances. Automatic follows macOS; Light and Dark override the Settings window appearance. The result should feel at home beside System Settings while remaining a normal independent app.
 
 ## Sidebar
 
 | Category | SF Symbol | Detail title |
 | :--- | :--- | :--- |
 | General | `gearshape` | General |
+| Features | `switch.2` | Features |
 | Advanced | `slider.horizontal.3` | Advanced |
 | Installed Plugins | `puzzlepiece.extension` | Installed Plugins |
 | Pro Sync | `icloud` | Pro Sync |
@@ -33,18 +34,21 @@ Use native `Label` rows and the user's accent colour. Verify symbol availability
 | Group | Control | Behaviour |
 | :--- | :--- | :--- |
 | Startup | **Launch at Login** · native toggle | Implemented through Core's Service Management adapter. On only for confirmed enabled status; off when unregistered. Show errors and required approval. |
-| Startup | **Show Notch Preview on Launch** · native toggle | Persisted locally, default off. Requests the existing compact preview once after launch finishes. Does not change login-item registration or current visibility. |
-| Appearance | **Dynamic Notch Expansion Speed** · native slider | Implemented slow-to-fast presentation mapped inversely to expansion duration. Duration range: 0.15–0.60 seconds, default 0.30 seconds. Clamp persisted values. |
+| Appearance | **Appearance** · native segmented picker | Automatic, Light or Dark. Saved locally under `appAppearance`, default Automatic. Applies immediately to the entire Settings window, including its sidebar and title bar. |
 
-Give the slider labelled endpoints and an accessible current value. Increasing speed must shorten the duration. Reduce Motion should provide an appropriate reduced transition regardless of the stored animation preference.
+Automatic releases the explicit appearance preference and follows subsequent macOS light/dark changes while Settings is open. Light and Dark remain selected independently of macOS. Reopening Settings or relaunching the app retains the selection. Unknown or malformed saved values fall back to Automatic. The black notch preview keeps its existing colours.
 
 Launch-at-login state comes from `SMAppService.mainApp` through `LoginItemService`, with no UserDefaults Boolean. Each operation re-reads macOS status, including after a thrown error. Failed registration stays off and failed unregistration stays on when that is still the confirmed state. Status text describes disabled, enabled, approval-required, missing-service and unknown states. Errors are shown inline and remain until another attempt or an external status change.
 
 When approval is required, the switch remains off and disabled, accompanied by Open Login Items Settings. This opens Apple's Login Items page through the Core adapter; the user grants approval or removes the pending item there. Returning to General Settings refreshes the status. Appearance, app activation and app-window focus notifications also refresh it without polling.
 
-Show Notch Preview on Launch remains available during pending login approval. It affects the next launch and does not change the transient foundation toggle or menu visibility immediately. Unsupported displays keep the preview hidden and report the controller's existing reason; the startup preference remains enabled. No automatic retry occurs on activation, wake or display recovery.
+Launch at Login only controls whether macOS launches the app. Every app launch starts island availability without opening Settings. Existing saved `showNotchPreviewOnLaunch` values are ignored. The current project uses ad hoc signing; validate actual login launching with a properly signed installed copy, as described in [prototype testing](PROTOTYPE_TESTING.md#launch-at-login-checks).
 
-Launch at Login uses the same startup preview preference as manual launches. Neither settings window is opened by startup preview presentation, and the development window remains available through Window > NotchMaster. The current project uses ad hoc signing; validate actual login launching with a properly signed installed copy, as described in [prototype testing](PROTOTYPE_TESTING.md#launch-at-login-checks).
+## Features
+
+Features explains automatic hover behaviour and displays the existing controller's confirmed status. There is no preview enable switch. Unsupported geometry displays the reason; availability resumes automatically when supported geometry returns. Wake recovery starts compact, with hover ready again.
+
+The Animation section contains Dynamic Notch Expansion Speed and its current duration. Slow maps to 0.60 seconds and Fast to 0.15 seconds, with a default duration of 0.30 seconds. Give the slider labelled endpoints and an accessible value. Changes persist locally and affect subsequent transitions. Reduce Motion applies the controller's reduced transition behaviour independently of this preference.
 
 ## Advanced
 
@@ -113,5 +117,6 @@ Verify on the eventual deployment baseline and current macOS, using keyboard nav
 
 - [NavigationSplitView](https://developer.apple.com/documentation/swiftui/navigationsplitview)
 - [GroupedFormStyle](https://developer.apple.com/documentation/swiftui/groupedformstyle)
+- [preferredColorScheme](https://developer.apple.com/documentation/swiftui/view/preferredcolorscheme(_:))
 - [Sidebars](https://developer.apple.com/design/human-interface-guidelines/sidebars)
 - [SMAppService](https://developer.apple.com/documentation/servicemanagement/smappservice)

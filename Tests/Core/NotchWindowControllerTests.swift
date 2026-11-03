@@ -15,6 +15,80 @@ private final class MotionProviderFixture {
 @Suite(.serialized)
 @MainActor
 struct NotchWindowControllerTests {
+    @Test(arguments: [false, true])
+    func runningIslandRecoversWhenSupportedDisplayReturns(initiallySupported: Bool) throws {
+        let notifications = NotificationCenter()
+        let provider = DisplayProviderFixture()
+        if !initiallySupported { provider.displays = [] }
+        var haptics = 0
+        let controller = NotchWindowController(
+            displays: { provider.displays },
+            notificationCenter: notifications,
+            reduceMotion: { true },
+            cursorPosition: { .zero },
+            performHapticFeedback: { haptics += 1 }
+        ) { _ in NSView() }
+        defer { controller.stop() }
+        let keyWindow = NSApp.keyWindow
+        controller.start()
+        #expect(controller.isPreviewVisible == initiallySupported)
+        provider.displays = []
+        notifications.post(name: NSApplication.didChangeScreenParametersNotification, object: nil)
+        #expect(!controller.isPreviewVisible && controller.hoverTimer == nil)
+        #expect(controller.statusMessage == NotchPreviewUnavailableReason.noBuiltInDisplay.message)
+
+        provider.displays = [DisplayFixture().geometry]
+        notifications.post(name: NSApplication.didChangeScreenParametersNotification, object: nil)
+        let panel = try #require(controller.window)
+        #expect(controller.isPreviewVisible && panel.isVisible && !controller.isExpanded)
+        #expect(controller.hoverTimer?.isValid == true)
+        #expect(haptics == 0 && NSApp.keyWindow === keyWindow)
+
+        controller.stop()
+        notifications.post(name: NSApplication.didChangeScreenParametersNotification, object: nil)
+        #expect(!panel.isVisible && controller.hoverTimer == nil)
+    }
+
+    @Test(arguments: [false, true])
+    func automaticRecoveryWaitsForSystemAndDisplayWake(systemWakesFirst: Bool) throws {
+        let notifications = NotificationCenter()
+        var haptics = 0
+        let controller = NotchWindowController(
+            displays: { [DisplayFixture().geometry] },
+            notificationCenter: notifications,
+            workspaceNotificationCenter: notifications,
+            reduceMotion: { true },
+            cursorPosition: { .zero },
+            performHapticFeedback: { haptics += 1 }
+        ) { _ in NSView() }
+        defer { controller.stop() }
+        controller.start()
+        let panel = try #require(controller.window)
+        let timer = try #require(controller.hoverTimer)
+        controller.toggleExpansion()
+        notifications.post(name: NSWorkspace.willSleepNotification, object: nil)
+        notifications.post(name: NSWorkspace.screensDidSleepNotification, object: nil)
+        notifications.post(name: NSApplication.didChangeScreenParametersNotification, object: nil)
+        #expect(!panel.isVisible && !timer.isValid && controller.hoverTimer == nil)
+        #expect(!controller.isExpanded)
+
+        let first = systemWakesFirst ? NSWorkspace.didWakeNotification : NSWorkspace.screensDidWakeNotification
+        let second = systemWakesFirst ? NSWorkspace.screensDidWakeNotification : NSWorkspace.didWakeNotification
+        notifications.post(name: first, object: nil)
+        #expect(!panel.isVisible && controller.hoverTimer == nil)
+        notifications.post(name: second, object: nil)
+        let restoredTimer = try #require(controller.hoverTimer)
+        #expect(controller.window === panel && panel.isVisible && !controller.isExpanded)
+        #expect(restoredTimer.isValid && restoredTimer !== timer)
+        notifications.post(name: second, object: nil)
+        #expect(controller.hoverTimer === restoredTimer && haptics == 0)
+
+        controller.stop()
+        notifications.post(name: NSWorkspace.didWakeNotification, object: nil)
+        notifications.post(name: NSWorkspace.screensDidWakeNotification, object: nil)
+        #expect(!panel.isVisible && controller.hoverTimer == nil)
+    }
+
     @Test
     func contentReceivesValidatedCameraHeightAndRefreshesWhenItChanges() throws {
         let notifications = NotificationCenter()
@@ -237,7 +311,7 @@ struct NotchWindowControllerTests {
     }
 
     @Test(arguments: [NSWorkspace.willSleepNotification, NSWorkspace.screensDidSleepNotification])
-    func sleepHidesPreviewUntilExplicitlyShown(_ notification: Notification.Name) throws {
+    func stoppedLifecycleDoesNotAutomaticallyRestoreAfterWake(_ notification: Notification.Name) throws {
         let workspaceNotifications = NotificationCenter()
         let controller = NotchWindowController(
             displays: { [DisplayFixture().geometry] },
@@ -258,6 +332,7 @@ struct NotchWindowControllerTests {
         #expect(!controller.isExpanded)
         #expect(!panel.isVisible)
         workspaceNotifications.post(name: NSWorkspace.didWakeNotification, object: nil)
+        workspaceNotifications.post(name: NSWorkspace.screensDidWakeNotification, object: nil)
         #expect(!panel.isVisible)
         controller.showPreview()
         #expect(!controller.isExpanded)
@@ -481,6 +556,8 @@ struct NotchWindowControllerTests {
         #expect(!animation.isAnimating)
         #expect(controller.frameAnimation == nil)
         #expect(!controller.isPreviewVisible && !controller.isExpanded)
+        notifications.post(name: NSWorkspace.didWakeNotification, object: nil)
+        notifications.post(name: NSWorkspace.screensDidWakeNotification, object: nil)
         controller.showPreview()
         #expect(controller.frameAnimation == nil)
         #expect(controller.window?.frame == compactFrame)

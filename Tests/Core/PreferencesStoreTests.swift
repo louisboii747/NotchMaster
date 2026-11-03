@@ -17,23 +17,40 @@ struct PreferencesStoreTests {
         try withDefaults { defaults, _ in
             let store = PreferencesStore(defaults: defaults)
             #expect(store.expansionDuration == 0.30)
-            #expect(!store.showNotchPreviewOnLaunch)
+            #expect(store.appearance == .automatic)
         }
     }
 
-    @Test(arguments: [false, true])
-    func persistsAndReloadsPreviewOnLaunch(enabled: Bool) throws {
+    @Test(arguments: AppAppearance.allCases)
+    func persistsAndReloadsAppearance(appearance: AppAppearance) throws {
         try withDefaults { defaults, suiteName in
             let store = PreferencesStore(defaults: defaults)
             store.expansionDuration = 0.42
-            store.showNotchPreviewOnLaunch = !enabled
-            store.showNotchPreviewOnLaunch = enabled
-            #expect(defaults.object(forKey: PreferencesStore.showNotchPreviewOnLaunchKey) as? Bool == enabled)
+            store.appearance = appearance
+            #expect(defaults.string(forKey: PreferencesStore.appearanceKey) == appearance.rawValue)
 
             let reloadedDefaults = try #require(UserDefaults(suiteName: suiteName))
             let reloaded = PreferencesStore(defaults: reloadedDefaults)
-            #expect(reloaded.showNotchPreviewOnLaunch == enabled)
+            #expect(reloaded.appearance == appearance)
             #expect(reloaded.expansionDuration == 0.42)
+        }
+    }
+
+    @Test(arguments: ["invalid", "", "Dark"])
+    func replacesUnknownAppearanceWithAutomatic(value: String) throws {
+        try withDefaults { defaults, _ in
+            defaults.set(value, forKey: PreferencesStore.appearanceKey)
+            #expect(PreferencesStore(defaults: defaults).appearance == .automatic)
+            #expect(defaults.string(forKey: PreferencesStore.appearanceKey) == "automatic")
+        }
+    }
+
+    @Test
+    func replacesMalformedAppearanceWithAutomatic() throws {
+        try withDefaults { defaults, _ in
+            defaults.set(["dark"], forKey: PreferencesStore.appearanceKey)
+            #expect(PreferencesStore(defaults: defaults).appearance == .automatic)
+            #expect(defaults.string(forKey: PreferencesStore.appearanceKey) == "automatic")
         }
     }
 

@@ -58,6 +58,24 @@ enum HoverCleanup: CaseIterable {
 @Suite(.serialized)
 @MainActor
 struct NotchHoverTests {
+    @Test
+    func startingIslandEnablesHoverWithoutAVisibilityToggle() throws {
+        let fixture = HoverFixture()
+        let controller = fixture.makeController()
+        defer { controller.stop() }
+        controller.start()
+        let timer = try #require(controller.hoverTimer)
+        #expect(controller.isPreviewVisible && !controller.isExpanded)
+        controller.start()
+        #expect(controller.hoverTimer === timer && fixture.hapticRequests == 0)
+        fixture.poll(controller, position: HoverFixture.entry)
+        #expect(controller.isExpanded && fixture.hapticRequests == 1)
+        fixture.poll(controller, position: HoverFixture.outside)
+        fixture.poll(controller, after: NotchHoverInteraction.collapseDelay + 0.01)
+        #expect(!controller.isExpanded && controller.isPreviewVisible)
+        #expect(fixture.hapticRequests == 2)
+    }
+
     @Test(arguments: [CGPoint.zero, CGPoint(x: -2100, y: 700), CGPoint(x: 1800, y: -1200)])
     func hoverRegionsSurroundThePhysicalNotchInGlobalCoordinates(origin: CGPoint) throws {
         let display = DisplayFixture(origin: origin).geometry
@@ -329,6 +347,7 @@ struct NotchHoverTests {
         #expect(fixture.positionReads == reads && fixture.hapticRequests == 1)
         fixture.displays = [DisplayFixture().geometry]
         fixture.workspaceNotifications.post(name: NSWorkspace.didWakeNotification, object: nil)
+        fixture.workspaceNotifications.post(name: NSWorkspace.screensDidWakeNotification, object: nil)
         #expect(controller.hoverTimer == nil)
         controller.showPreview()
         #expect(controller.hoverTimer !== timer)

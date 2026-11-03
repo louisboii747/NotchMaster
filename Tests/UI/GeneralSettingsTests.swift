@@ -7,52 +7,6 @@ import Testing
 @Suite(.serialized)
 @MainActor
 struct GeneralSettingsTests {
-    @Test
-    func previewOnLaunchBindingPersistsIndependentlyOfLoginApproval() async throws {
-        let system = TestLoginItemSystem(status: .requiresApproval)
-        try await withSettings(system: system) { view, service, _ in
-            #expect(!view.preferences.showNotchPreviewOnLaunch)
-            view.$preferences.showNotchPreviewOnLaunch.wrappedValue = true
-            #expect(view.preferences.showNotchPreviewOnLaunch)
-            #expect(service.requiresApproval && !view.launchAtLogin.wrappedValue)
-            view.$preferences.showNotchPreviewOnLaunch.wrappedValue = false
-            #expect(!view.preferences.showNotchPreviewOnLaunch)
-            #expect(system.registrations == 0 && system.unregistrations == 0)
-        }
-    }
-
-    @Test(arguments: [false, true])
-    func foundationToggleUsesConfirmedPreviewState(supported: Bool) throws {
-        let suiteName = "NotchMasterFoundationTests.\(UUID().uuidString)"
-        let defaults = try #require(UserDefaults(suiteName: suiteName))
-        defer { defaults.removePersistentDomain(forName: suiteName) }
-        let controller = NotchWindowController(
-            displays: { supported ? [DisplayFixture(origin: CGPoint(x: -3000, y: -3000)).geometry] : [] },
-            reduceMotion: { true },
-            cursorPosition: { .zero }
-        ) { _ in NSView() }
-        defer { controller.hidePreview() }
-        let view = AppShellView(preferences: PreferencesStore(defaults: defaults), notchWindowController: controller)
-
-        #expect(!view.previewVisibility.wrappedValue)
-        view.previewVisibility.wrappedValue = true
-        #expect(view.previewVisibility.wrappedValue == supported)
-        #expect(controller.isPreviewVisible == supported)
-        if !supported {
-            #expect(controller.statusMessage == NotchPreviewUnavailableReason.noBuiltInDisplay.message)
-        }
-        view.previewVisibility.wrappedValue = false
-        #expect(!controller.isPreviewVisible && !view.previewVisibility.wrappedValue)
-        if !supported {
-            #expect(controller.statusMessage == NotchPreviewUnavailableReason.noBuiltInDisplay.message)
-        }
-
-        controller.togglePreview()
-        #expect(view.previewVisibility.wrappedValue == supported)
-        controller.hidePreview()
-        #expect(!view.previewVisibility.wrappedValue)
-    }
-
     @Test(arguments: [false, true])
     func failedOperationsKeepTheSettingsBindingConsistent(enabling: Bool) async throws {
         let system = TestLoginItemSystem(status: enabling ? .notRegistered : .enabled)
@@ -84,6 +38,46 @@ struct GeneralSettingsTests {
         }
     }
 
+    @Test
+    func appearanceChangesUpdateWindowAndAutomaticFollowsInheritedAppearance() async throws {
+        let previousAppearance = NSApp.appearance
+        defer { NSApp.appearance = previousAppearance }
+        NSApp.appearance = NSAppearance(named: .aqua)
+        try await withSettings(system: TestLoginItemSystem()) { view, _, host in
+            let window = try #require(host.window)
+            #expect(window.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .aqua)
+
+            view.$preferences.appearance.wrappedValue = .dark
+            try await Task.sleep(for: .milliseconds(50))
+            #expect(window.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua)
+            try recordSnapshot(host, named: "settings-dark.png")
+
+            view.$preferences.appearance.wrappedValue = .light
+            try await Task.sleep(for: .milliseconds(50))
+            #expect(window.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .aqua)
+            try recordSnapshot(host, named: "settings-light.png")
+
+            NSApp.appearance = NSAppearance(named: .darkAqua)
+            try await Task.sleep(for: .milliseconds(50))
+            #expect(window.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .aqua)
+
+            view.$preferences.appearance.wrappedValue = .automatic
+            try await Task.sleep(for: .milliseconds(50))
+            #expect(window.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua)
+
+            NSApp.appearance = NSAppearance(named: .aqua)
+            try await Task.sleep(for: .milliseconds(50))
+            #expect(window.effectiveAppearance.bestMatch(from: [.aqua, .darkAqua]) == .aqua)
+        }
+    }
+
+    private func recordSnapshot(_ view: NSView, named name: String) throws {
+        view.layoutSubtreeIfNeeded()
+        let image = try #require(view.bitmapImageRepForCachingDisplay(in: view.bounds))
+        view.cacheDisplay(in: view.bounds, to: image)
+        Attachment.record(try #require(image.representation(using: .png, properties: [:])), named: name)
+    }
+
     private func withSettings(
         system: TestLoginItemSystem,
         body: (GeneralSettingsView, LoginItemService, NSView) async throws -> Void
@@ -96,9 +90,14 @@ struct GeneralSettingsTests {
             preferences: PreferencesStore(defaults: defaults),
             loginItemService: service
         )
-        let host = NSHostingView(rootView: view)
+        let controller = NotchWindowController(displays: { [] }) { _ in NSView() }
+        let host = NSHostingView(rootView: SettingsView(
+            preferences: view.preferences,
+            loginItemService: service,
+            notchWindowController: controller
+        ))
         let window = NSWindow(
-            contentRect: CGRect(x: -3000, y: -3000, width: 520, height: 480),
+            contentRect: CGRect(x: -3000, y: -3000, width: 680, height: 520),
             styleMask: [.titled], backing: .buffered, defer: false
         )
         window.isReleasedWhenClosed = false

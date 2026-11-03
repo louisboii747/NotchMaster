@@ -25,17 +25,25 @@ struct GeneralSettingsView: View {
                         .foregroundStyle(.red)
                         .accessibilityIdentifier("LoginItemError")
                 }
-
-                Toggle("Show Notch Preview on Launch", isOn: $preferences.showNotchPreviewOnLaunch)
-                    .toggleStyle(.switch)
-                    .accessibilityIdentifier("ShowNotchPreviewOnLaunch")
             } header: {
                 Text("Startup")
             } footer: {
                 Text(loginItemService.statusMessage)
             }
 
-            ExpansionSpeedSettings(preferences: preferences)
+            Section {
+                Picker("Appearance", selection: $preferences.appearance) {
+                    Text("Automatic").tag(AppAppearance.automatic)
+                    Text("Light").tag(AppAppearance.light)
+                    Text("Dark").tag(AppAppearance.dark)
+                }
+                .pickerStyle(.segmented)
+                .accessibilityIdentifier("AppAppearance")
+            } header: {
+                Text("Appearance")
+            } footer: {
+                Text("Automatic follows the macOS appearance.")
+            }
         }
         .formStyle(.grouped)
         .onAppear {
@@ -54,38 +62,5 @@ struct GeneralSettingsView: View {
             get: { loginItemService.isEnabled },
             set: { loginItemService.setEnabled($0) }
         )
-    }
-}
-
-@MainActor
-struct ExpansionSpeedSettings: View {
-    @Bindable var preferences: PreferencesStore
-
-    var body: some View {
-        Section {
-            Slider(value: $preferences.expansionSpeed, in: 0...1) {
-                Text("Dynamic Notch Expansion Speed")
-            } minimumValueLabel: {
-                Text("Slow")
-            } maximumValueLabel: {
-                Text("Fast")
-            }
-            .accessibilityLabel("Dynamic Notch Expansion Speed")
-            .accessibilityValue(durationText)
-
-            LabeledContent("Expansion duration") {
-                durationText
-                    .monospacedDigit()
-                    .foregroundStyle(.secondary)
-            }
-        } header: {
-            Text("Appearance")
-        } footer: {
-            Text("Faster speed means a shorter expansion duration. Changes are saved locally.")
-        }
-    }
-
-    private var durationText: Text {
-        Text("\(preferences.expansionDuration, format: .number.precision(.fractionLength(2))) seconds")
     }
 }

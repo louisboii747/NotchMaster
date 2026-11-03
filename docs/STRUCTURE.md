@@ -40,12 +40,12 @@ NotchMaster/
 │   │       └── NotchHoverInteraction.swift
 │   └── UI/
 │       ├── README.md
-│       ├── AppShellView.swift
 │       ├── NotchMenuView.swift
 │       ├── Notch/NotchView.swift
 │       └── Settings/
 │           ├── SettingsView.swift
-│           └── GeneralSettingsView.swift
+│           ├── GeneralSettingsView.swift
+│           └── FeaturesSettingsView.swift
 ├── Tests/
 │   ├── Core/
 │   │   ├── PreferencesStoreTests.swift
@@ -90,10 +90,10 @@ The following names describe the wider plan. Only the Swift files shown in the t
 
 | Path | Responsibility |
 | :--- | :--- |
-| `Sources/App/NotchMasterApp.swift` | App entry point, window/menu/Settings scenes, one-time startup preview request and last-window lifecycle delegate. |
+| `Sources/App/NotchMasterApp.swift` | App entry point, menu and unified Settings scenes, automatic island start/stop and last-window lifecycle delegate. |
 | `Sources/App/AppDependencies.swift` | Compose and retain services, with an injectable preview controller for startup tests. |
-| `Sources/UI/AppShellView.swift` | Foundation feature-settings form with a confirmed preview toggle, shared expansion speed setting and app Settings link. |
-| `Sources/UI/NotchMenuView.swift` | Native menu bar Show/Hide, Expand/Collapse, preview status, feature/app Settings and Quit commands. |
+| `Sources/UI/Settings/FeaturesSettingsView.swift` | Features page in the unified Settings window, with automatic island guidance, confirmed status and expansion speed. |
+| `Sources/UI/NotchMenuView.swift` | Native menu bar Expand/Collapse, preview status, Open Settings and Quit commands. |
 | `Sources/Core/Plugins/PluginRegistry.swift` | Plugin identities, lifecycle, and enabled state. |
 | `Sources/Core/Windowing/NotchWindowController.swift` | Implemented passive AppKit panel ownership, presentation, and display/sleep handling. |
 | `Sources/Core/Windowing/NotchHoverInteraction.swift` | Implemented hover boundaries, entry detection, delayed collapse and manual overrides. |
@@ -105,7 +105,7 @@ The following names describe the wider plan. Only the Swift files shown in the t
 | `Sources/Core/Sync/SyncCoordinator.swift` | Opt-in iCloud preference synchronization. |
 | `Sources/UI/Settings/SettingsView.swift` | Sidebar and detail composition. |
 | `Sources/UI/Settings/SettingsCategory.swift` | Stable category identity, title, and symbol. |
-| `Sources/UI/Settings/GeneralSettingsView.swift` | Native login-item controls with lifecycle status refresh, the independent startup preview toggle and the shared `ExpansionSpeedSettings` section used by both settings forms. |
+| `Sources/UI/Settings/GeneralSettingsView.swift` | Native login-item controls with lifecycle status refresh and the Automatic/Light/Dark appearance selector. |
 | `Sources/UI/Settings/AdvancedSettingsView.swift` | Metal effect preference and capability state. |
 | `Sources/UI/Settings/InstalledPluginsView.swift` | Plugin list and lifecycle-aware toggles. |
 | `Sources/UI/Settings/PluginRow.swift` | Accessible plugin label, description, and switch. |

@@ -10,7 +10,7 @@
 		400000000000000000000001 /* NotchMasterApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000001 /* NotchMasterApp.swift */; };
 		400000000000000000000002 /* AppDependencies.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000002 /* AppDependencies.swift */; };
 		400000000000000000000003 /* PreferencesStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000003 /* PreferencesStore.swift */; };
-		400000000000000000000004 /* AppShellView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000004 /* AppShellView.swift */; };
+		400000000000000000000004 /* FeaturesSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000004 /* FeaturesSettingsView.swift */; };
 		400000000000000000000005 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000005 /* SettingsView.swift */; };
 		400000000000000000000006 /* GeneralSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000006 /* GeneralSettingsView.swift */; };
 		400000000000000000000007 /* PreferencesStoreTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000007 /* PreferencesStoreTests.swift */; };
@@ -48,7 +48,7 @@
 		300000000000000000000001 /* NotchMasterApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchMasterApp.swift; sourceTree = "<group>"; };
 		300000000000000000000002 /* AppDependencies.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDependencies.swift; sourceTree = "<group>"; };
 		300000000000000000000003 /* PreferencesStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesStore.swift; sourceTree = "<group>"; };
-		300000000000000000000004 /* AppShellView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppShellView.swift; sourceTree = "<group>"; };
+		300000000000000000000004 /* FeaturesSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeaturesSettingsView.swift; sourceTree = "<group>"; };
 		300000000000000000000005 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		300000000000000000000006 /* GeneralSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeneralSettingsView.swift; sourceTree = "<group>"; };
 		300000000000000000000007 /* PreferencesStoreTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesStoreTests.swift; sourceTree = "<group>"; };
@@ -155,7 +155,6 @@
 		200000000000000000000006 /* UI */ = {
 			isa = PBXGroup;
 			children = (
-				300000000000000000000004 /* AppShellView.swift */,
 				300000000000000000000014 /* NotchMenuView.swift */,
 				200000000000000000000007 /* Settings */,
 				20000000000000000000000D /* Notch */,
@@ -168,6 +167,7 @@
 			children = (
 				300000000000000000000005 /* SettingsView.swift */,
 				300000000000000000000006 /* GeneralSettingsView.swift */,
+				300000000000000000000004 /* FeaturesSettingsView.swift */,
 			);
 			path = Settings;
 			sourceTree = "<group>";
@@ -350,7 +350,7 @@
 				400000000000000000000001 /* NotchMasterApp.swift in Sources */,
 				400000000000000000000002 /* AppDependencies.swift in Sources */,
 				400000000000000000000003 /* PreferencesStore.swift in Sources */,
-				400000000000000000000004 /* AppShellView.swift in Sources */,
+				400000000000000000000004 /* FeaturesSettingsView.swift in Sources */,
 				400000000000000000000005 /* SettingsView.swift in Sources */,
 				400000000000000000000006 /* GeneralSettingsView.swift in Sources */,
 				400000000000000000000009 /* DisplayGeometry.swift in Sources */,
