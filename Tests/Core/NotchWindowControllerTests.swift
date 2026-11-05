@@ -375,6 +375,7 @@ struct NotchWindowControllerTests {
         controller.showPreview()
         let panel = try #require(controller.window)
         let compactFrame = panel.frame
+        let expandedFrame = try DisplayGeometry.previewPlacement(in: [display], isExpanded: true).get().frame
         #expect(controller.frameAnimation == nil)
 
         for isExpanded in [true, false] {
@@ -389,7 +390,7 @@ struct NotchWindowControllerTests {
                 #expect(abs(panel.frame.midX - compactFrame.midX) < 0.001)
                 #expect(abs(panel.frame.maxY - compactFrame.maxY) < 0.001)
                 #expect(panel.frame.width > compactFrame.width)
-                #expect(panel.frame.width < 380)
+                #expect(panel.frame.width < expandedFrame.width)
                 #expect(display.frame.contains(panel.frame))
                 if progress == 0.25 { #expect(animation.currentValue < progress) }
                 if progress == 0.75 { #expect(animation.currentValue > progress) }
@@ -610,6 +611,7 @@ struct NotchWindowControllerTests {
         let panel = try #require(controller.window)
         let content = panel.contentView
         let compactFrame = panel.frame
+        let expandedFrame = try DisplayGeometry.previewPlacement(in: [display], isExpanded: true).get().frame
         let keyWindow = NSApp.keyWindow
         let mainWindow = NSApp.mainWindow
         let wasActive = NSApp.isActive
@@ -621,7 +623,8 @@ struct NotchWindowControllerTests {
             let deadline = ContinuousClock.now + .seconds(3)
             while animation.isAnimating, ContinuousClock.now < deadline {
                 try await Task.sleep(for: .milliseconds(10))
-                sawIntermediateFrame = sawIntermediateFrame || (panel.frame.width > compactFrame.width && panel.frame.width < 380)
+                sawIntermediateFrame = sawIntermediateFrame
+                    || (panel.frame.width > compactFrame.width && panel.frame.width < expandedFrame.width)
                 #expect(abs(panel.frame.midX - compactFrame.midX) < 0.001)
                 #expect(abs(panel.frame.maxY - compactFrame.maxY) < 0.001)
                 #expect(NSApp.keyWindow === keyWindow && NSApp.mainWindow === mainWindow)

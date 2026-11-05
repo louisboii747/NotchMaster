@@ -108,7 +108,7 @@ Real registration, approval prompts, installed-app signing and login/logout beha
 
 ## Battery checks on MacBook Air
 
-1. Launch and hover to expand the island on a supported built-in display. Compare the percentage with macOS, allowing for rounding and notification timing. Check the subtle icon and percentage beside the unchanged centred clock and date, entirely below the physical camera. Collapse and confirm the original compact black surface has no icon or text.
+1. Launch and hover to expand the island on a supported built-in display. Check the wider, taller surface and rounded shoulders and bottom corners. Compare the percentage with macOS, allowing for rounding and notification timing. Check the gap between the battery badge and the centred clock, with both fully below the physical camera. Collapse and confirm the compact surface returns to its original size and shape.
 2. Connect and disconnect power while expanded. Check the static bolt against macOS's actual charging state, including optimized charging or a full battery when practical. A power cable alone must not imply charging. The clock, focus, hover and panel must not jump or restart.
 3. Collapse the island, change power state, then hover to expand it again. It should use the latest battery information. Sleep/wake and hover again to verify automatic recovery. Leave it expanded through a percentage change and a clock minute boundary.
 4. Exercise rapid expansion/collapse reversals at slow and fast speeds and with Reduce Motion. Check that the indicator never crosses camera clearance or clips. Try longer locale formats; when there is insufficient horizontal room, only the battery should disappear and the clock should retain its existing behaviour.

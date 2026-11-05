@@ -6,22 +6,26 @@ import Testing
 @Suite(.serialized)
 @MainActor
 struct NotchViewTests {
+    private let expandedSize = CGSize(width: 480, height: 152)
+
     @Test(arguments: [false, true])
     func batteryFitsBesideClockWithoutMovingIt(isCharging: Bool) throws {
-        let size = CGSize(width: 380, height: 120)
+        let size = expandedSize
         let clock = try snapshot(expandedContent(information: nil, size: size), size: size)
         let clockBounds = try #require(brightBounds(in: clock))
         let image = try snapshot(expandedContent(
             information: BatteryInformation(percentage: 62, isCharging: isCharging), size: size
         ), size: size)
         let bounds = try #require(brightBounds(in: image))
+        let batteryBounds = try #require(brightBounds(in: image, startingAtX: Int(clockBounds.maxX)))
         let originalClock = try #require(clock.cgImage?.cropping(to: clockBounds))
         let retainedClock = try #require(image.cgImage?.cropping(to: clockBounds))
 
         #expect(NSBitmapImageRep(cgImage: originalClock).tiffRepresentation == NSBitmapImageRep(cgImage: retainedClock).tiffRepresentation)
         #expect(bounds.minX == clockBounds.minX && bounds.maxX > clockBounds.maxX)
-        #expect(bounds.minY >= 48 && bounds.maxY <= 112)
-        #expect(bounds.maxX <= 364)
+        #expect(batteryBounds.minX - clockBounds.maxX >= 24)
+        #expect(bounds.minY >= 54 && bounds.maxY <= 138)
+        #expect(bounds.maxX <= 456)
         Attachment.record(try #require(image.representation(using: .png, properties: [:])), named: "battery-\(isCharging).png")
     }
 
@@ -30,7 +34,7 @@ struct NotchViewTests {
         let clockView = NotchClockView(date: Date(timeIntervalSince1970: 1_795_651_140))
             .environment(\.locale, Locale(identifier: "en_GB"))
             .environment(\.timeZone, .gmt)
-        let size = CGSize(width: ceil(NSHostingView(rootView: clockView).fittingSize.width) + 40, height: 120)
+        let size = CGSize(width: ceil(NSHostingView(rootView: clockView).fittingSize.width) + 56, height: expandedSize.height)
         let clock = try snapshot(expandedContent(information: nil, size: size), size: size)
         let image = try snapshot(expandedContent(
             information: BatteryInformation(percentage: 100, isCharging: true), size: size
@@ -64,32 +68,46 @@ struct NotchViewTests {
     }
 
     @Test
+    func expandedSurfaceRoundsAllCornersAndReachesTheTopAtTheCenter() throws {
+        let service = BatteryInformationService(provider: TestBatteryInformationProvider())
+        let image = try snapshot(NotchView(cameraHeight: 40, batteryService: service), size: expandedSize)
+
+        for x in [2, image.pixelsWide - 3] {
+            for y in [2, image.pixelsHigh - 3] {
+                let color = try #require(image.colorAt(x: x, y: y))
+                #expect(color.alphaComponent < 0.05)
+            }
+        }
+        #expect(image.colorAt(x: image.pixelsWide / 2, y: 2)?.alphaComponent == 1)
+    }
+
+    @Test
     func contentFadesOnlyAfterItFitsAndReversesAtTheSameSize() {
         let contentSize = CGSize(width: 240, height: 52)
         var increasing: [Double] = []
-        for height in 32...120 {
+        for height in 32...Int(expandedSize.height) {
             let opacity = NotchView.contentOpacity(
-                panelSize: CGSize(width: 380, height: height),
+                panelSize: CGSize(width: Int(expandedSize.width), height: height),
                 contentSize: contentSize,
                 cameraHeight: 32
             )
             increasing.append(opacity)
-            if height <= 100 { #expect(opacity == 0) }
-            if height >= 108 { #expect(opacity == 1) }
+            if height <= 112 { #expect(opacity == 0) }
+            if height >= 120 { #expect(opacity == 1) }
         }
 
         #expect(increasing == increasing.sorted())
         #expect(increasing.contains { $0 > 0 && $0 < 1 })
-        let decreasing = (32...120).reversed().map { height in
+        let decreasing = (32...Int(expandedSize.height)).reversed().map { height in
             NotchView.contentOpacity(
-                panelSize: CGSize(width: 380, height: height),
+                panelSize: CGSize(width: Int(expandedSize.width), height: height),
                 contentSize: contentSize,
                 cameraHeight: 32
             )
         }
         #expect(decreasing == increasing.reversed())
         #expect(NotchView.contentOpacity(
-            panelSize: CGSize(width: 260, height: 120),
+            panelSize: CGSize(width: 280, height: expandedSize.height),
             contentSize: contentSize,
             cameraHeight: 32
         ) == 0)
@@ -104,7 +122,7 @@ struct NotchViewTests {
         let size = NSHostingView(rootView: clock).fittingSize
 
         #expect(NotchView.contentOpacity(
-            panelSize: CGSize(width: 380, height: 120),
+            panelSize: expandedSize,
             contentSize: size,
             cameraHeight: 40
         ) == 1)
@@ -112,14 +130,14 @@ struct NotchViewTests {
         let image = try snapshot(
             NotchView(cameraHeight: 40, batteryService: BatteryInformationService(provider: TestBatteryInformationProvider()))
                 .environment(\.locale, locale),
-            size: CGSize(width: 380, height: 120)
+            size: expandedSize
         )
         Attachment.record(try #require(image.representation(using: .png, properties: [:])), named: "clock-\(localeIdentifier).png")
         let bounds = try #require(brightBounds(in: image))
-        #expect(bounds.minY >= 48)
-        #expect(bounds.maxY <= 112)
-        #expect(bounds.minX >= 16)
-        #expect(bounds.maxX <= 364)
+        #expect(bounds.minY >= 54)
+        #expect(bounds.maxY <= 138)
+        #expect(bounds.minX >= 24)
+        #expect(bounds.maxX <= 456)
     }
 
     @Test
@@ -220,10 +238,10 @@ struct NotchViewTests {
         return bounds.map { CGRect(x: $0.minX / scale, y: $0.minY / scale, width: $0.width / scale, height: $0.height / scale) }
     }
 
-    private func brightBounds(in image: NSBitmapImageRep) -> CGRect? {
+    private func brightBounds(in image: NSBitmapImageRep, startingAtX: Int = 0) -> CGRect? {
         var bounds = CGRect.null
         for y in 0..<image.pixelsHigh {
-            for x in 0..<image.pixelsWide {
+            for x in startingAtX..<image.pixelsWide {
                 guard let color = image.colorAt(x: x, y: y)?.usingColorSpace(.deviceRGB),
                       color.alphaComponent > 0.05, color.redComponent > 0.05 else { continue }
                 bounds = bounds.union(CGRect(x: x, y: y, width: 1, height: 1))

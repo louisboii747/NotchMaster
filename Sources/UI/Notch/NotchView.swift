@@ -8,12 +8,20 @@ struct NotchView: View {
     var body: some View {
         GeometryReader { geometry in
             let size = geometry.size
+            let contentHeight = max(0, size.height - cameraHeight)
+            let cornerGrowth = min(18, contentHeight / 4)
 
-            UnevenRoundedRectangle(bottomLeadingRadius: 10, bottomTrailingRadius: 10, style: .continuous)
-                .fill(.black)
-                .accessibilityHidden(true)
+            UnevenRoundedRectangle(
+                topLeadingRadius: cornerGrowth,
+                bottomLeadingRadius: 10 + cornerGrowth,
+                bottomTrailingRadius: 10 + cornerGrowth,
+                topTrailingRadius: cornerGrowth,
+                style: .continuous
+            )
+            .fill(.black)
+            .accessibilityHidden(true)
 
-            if size.height > cameraHeight {
+            if contentHeight > 0 {
                 TimelineView(.everyMinute) { context in
                     NotchExpandedContentView(
                         date: context.date,
@@ -22,7 +30,7 @@ struct NotchView: View {
                         cameraHeight: cameraHeight
                     )
                 }
-                .frame(width: size.width, height: size.height - cameraHeight)
+                .frame(width: size.width, height: contentHeight)
                 .offset(y: cameraHeight)
             }
         }
@@ -34,8 +42,8 @@ struct NotchView: View {
         contentSize: CGSize,
         cameraHeight: CGFloat
     ) -> Double {
-        let horizontalRoom = panelSize.width - contentSize.width - 32
-        let verticalRoom = panelSize.height - cameraHeight - contentSize.height - 16
+        let horizontalRoom = panelSize.width - contentSize.width - 48
+        let verticalRoom = panelSize.height - cameraHeight - contentSize.height - 28
         return Double(min(1, max(0, min(horizontalRoom, verticalRoom) / 8)))
     }
 }
@@ -48,6 +56,8 @@ struct NotchExpandedContentView: View {
     let cameraHeight: CGFloat
 
     var body: some View {
+        let batterySpacing: CGFloat = 28
+
         NotchClockView(date: date)
             .fixedSize()
             .visualEffect { content, textGeometry in
@@ -68,14 +78,14 @@ struct NotchExpandedContentView: View {
                                 content.opacity(NotchView.contentOpacity(
                                     panelSize: panelSize,
                                     contentSize: CGSize(
-                                        width: clockSize.width + 2 * (batteryGeometry.size.width + 12),
+                                        width: clockSize.width + 2 * (batteryGeometry.size.width + batterySpacing),
                                         height: max(clockSize.height, batteryGeometry.size.height)
                                     ),
                                     cameraHeight: cameraHeight
                                 ))
                             }
                             .frame(height: clockSize.height)
-                            .offset(x: clockSize.width + 12)
+                            .offset(x: clockSize.width + batterySpacing)
                     }
                 }
             }
@@ -93,12 +103,12 @@ struct NotchBatteryView: View {
     }
 
     var body: some View {
-        VStack(spacing: 3) {
+        VStack(spacing: 6) {
             Image(systemName: symbolName)
-                .font(.subheadline)
+                .font(.title3)
                 .accessibilityHidden(true)
             Text(Double(information.percentage) / 100, format: .percent.precision(.fractionLength(0)))
-                .font(.caption2)
+                .font(.caption)
                 .monospacedDigit()
         }
         .foregroundStyle(.white.opacity(0.65))

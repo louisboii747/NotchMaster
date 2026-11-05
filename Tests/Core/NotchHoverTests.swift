@@ -91,7 +91,7 @@ struct NotchHoverTests {
         #expect(regions.containsActivation(CGPoint(x: compact.midX, y: display.frame.maxY)))
         #expect(!regions.containsActivation(CGPoint(x: compact.midX, y: display.frame.maxY + 1)))
         #expect(compact.size == CGSize(width: 180, height: 32))
-        #expect(expanded.size == CGSize(width: 380, height: 120))
+        #expect(expanded.size == CGSize(width: 480, height: 152))
     }
 
     @Test
@@ -184,8 +184,8 @@ struct NotchHoverTests {
         for x: CGFloat in [747, 748, 749, 951, 952, 953] {
             fixture.poll(controller, position: CGPoint(x: x, y: 1060), after: 0.2)
         }
-        fixture.poll(controller, position: CGPoint(x: 651, y: 1000))
-        fixture.poll(controller, position: CGPoint(x: 652, y: 1000), after: 0.1)
+        fixture.poll(controller, position: CGPoint(x: 601, y: 1000))
+        fixture.poll(controller, position: CGPoint(x: 602, y: 1000), after: 0.1)
         fixture.poll(controller, after: 1)
 
         #expect(controller.isExpanded)

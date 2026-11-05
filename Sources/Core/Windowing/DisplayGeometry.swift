@@ -83,11 +83,11 @@ struct DisplayGeometry: Equatable {
         var previewFrame = compactFrame
         if isExpanded {
             let sideExtension = min(
-                max(0, (380 - compactFrame.width) / 2),
+                max(0, (480 - compactFrame.width) / 2),
                 compactFrame.minX - frame.minX,
                 frame.maxX - compactFrame.maxX
             )
-            let bottomExtension = min(max(0, 120 - compactFrame.height), compactFrame.minY - frame.minY)
+            let bottomExtension = min(max(0, 152 - compactFrame.height), compactFrame.minY - frame.minY)
             previewFrame = CGRect(
                 x: compactFrame.minX - sideExtension,
                 y: compactFrame.minY - bottomExtension,
