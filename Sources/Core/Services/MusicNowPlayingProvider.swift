@@ -9,14 +9,27 @@ protocol MusicNowPlayingReading: Sendable {
 }
 
 actor MusicNowPlayingReader: MusicNowPlayingReading {
+    static let metadataSendOptions: NSAppleEventDescriptor.SendOptions = [
+        .waitForReply, .neverInteract, .dontRecord,
+        NSAppleEventDescriptor.SendOptions(rawValue: UInt(kAEDoNotPromptForUserConsent))
+    ]
+
+    private let determinePermission: @Sendable (NSAppleEventDescriptor, Bool) -> OSStatus
     private let send: @Sendable (NSAppleEventDescriptor) throws -> NSAppleEventDescriptor
+    private var hasRequestedPermission = false
     private var artworkKey: String?
     private var artwork: Data?
     private var artworkReadDate: Date?
 
-    init(send: @escaping @Sendable (NSAppleEventDescriptor) throws -> NSAppleEventDescriptor = {
-        try $0.sendEvent(options: [.waitForReply, .neverInteract, .dontRecord], timeout: 1)
-    }) {
+    init(
+        determinePermission: @escaping @Sendable (NSAppleEventDescriptor, Bool) -> OSStatus = {
+            AEDeterminePermissionToAutomateTarget($0.aeDesc, UInt32(kAECoreSuite), UInt32(kAEGetData), $1)
+        },
+        send: @escaping @Sendable (NSAppleEventDescriptor) throws -> NSAppleEventDescriptor = {
+            try $0.sendEvent(options: MusicNowPlayingReader.metadataSendOptions, timeout: 1)
+        }
+    ) {
+        self.determinePermission = determinePermission
         self.send = send
     }
 
@@ -29,7 +42,18 @@ actor MusicNowPlayingReader: MusicNowPlayingReading {
     func read(processIdentifier: pid_t) -> NowPlayingState {
         autoreleasepool {
             do {
+                try Task.checkCancellation()
                 let target = NSAppleEventDescriptor(processIdentifier: processIdentifier)
+                var permission = determinePermission(target, false)
+                if permission == errAEEventWouldRequireUserConsent, !hasRequestedPermission {
+                    hasRequestedPermission = true
+                    permission = determinePermission(target, true)
+                }
+                guard permission == noErr else {
+                    reset()
+                    return .unavailable
+                }
+                try Task.checkCancellation()
                 let state = try get(property(0x70506C53), from: target).enumCodeValue
                 guard state == 0x6B505350 || state == 0x6B505370 else {
                     reset()

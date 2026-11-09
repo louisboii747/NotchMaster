@@ -85,6 +85,48 @@ final class TestMusicAppleEvents: @unchecked Sendable {
     }
 }
 
+final class TestMusicPermission: @unchecked Sendable {
+    private let condition = NSCondition()
+    private var status: OSStatus
+    private let promptStatus: OSStatus
+    private var waitsForResponse: Bool
+    private var requests: [Bool] = []
+
+    init(status: OSStatus = noErr, promptStatus: OSStatus = noErr, waitsForResponse: Bool = false) {
+        self.status = status
+        self.promptStatus = promptStatus
+        self.waitsForResponse = waitsForResponse
+    }
+
+    var promptCount: Int {
+        condition.lock()
+        defer { condition.unlock() }
+        return requests.filter { $0 }.count
+    }
+
+    func determine(_ target: NSAppleEventDescriptor, askUserIfNeeded: Bool) -> OSStatus {
+        condition.lock()
+        defer { condition.unlock() }
+        requests.append(askUserIfNeeded)
+        if askUserIfNeeded {
+            if waitsForResponse {
+                while waitsForResponse { condition.wait() }
+            } else {
+                status = promptStatus
+            }
+        }
+        return status
+    }
+
+    func respond(_ status: OSStatus) {
+        condition.lock()
+        defer { condition.unlock() }
+        self.status = status
+        waitsForResponse = false
+        condition.broadcast()
+    }
+}
+
 @Suite
 @MainActor
 struct NowPlayingServiceTests {
@@ -163,7 +205,7 @@ struct NowPlayingServiceTests {
     @Test
     func readerMapsTrackChangesAndClearsArtworkOnMissingOrInvalidMetadata() async {
         let events = TestMusicAppleEvents()
-        let reader = MusicNowPlayingReader(send: events.send)
+        let reader = MusicNowPlayingReader(determinePermission: { _, _ in noErr }, send: events.send)
         let first = await reader.read(processIdentifier: 123)
         #expect(first == .playing(NowPlayingTrack(title: "First Song", artist: "Artist", artwork: nil)))
         events.set(0x706E616D, value: NSAppleEventDescriptor(string: "Next Song"))
@@ -178,9 +220,9 @@ struct NowPlayingServiceTests {
     func readerToleratesUnavailableArtistAndTreatsDeniedAutomationAsUnavailable() async {
         let events = TestMusicAppleEvents()
         events.set(0x70417274, value: nil)
-        let reader = MusicNowPlayingReader(send: events.send)
+        let reader = MusicNowPlayingReader(determinePermission: { _, _ in noErr }, send: events.send)
         #expect(await reader.read(processIdentifier: 123).track?.artist == "")
-        let denied = MusicNowPlayingReader(send: { _ in
+        let denied = MusicNowPlayingReader(determinePermission: { _, _ in noErr }, send: { _ in
             throw NSError(domain: NSOSStatusErrorDomain, code: -1743)
         })
         #expect(await denied.read(processIdentifier: 123) == .unavailable)
@@ -191,7 +233,7 @@ struct NowPlayingServiceTests {
         let raw = try makeArtwork()
         let events = TestMusicAppleEvents()
         events.set(0x70526177, value: NSAppleEventDescriptor(descriptorType: UInt32(typeData), data: raw))
-        let reader = MusicNowPlayingReader(send: events.send)
+        let reader = MusicNowPlayingReader(determinePermission: { _, _ in noErr }, send: events.send)
         let state = await reader.read(processIdentifier: 123)
         let artwork = try #require(state.track?.artwork)
         let source = try #require(CGImageSourceCreateWithData(artwork as CFData, nil))
@@ -205,6 +247,56 @@ struct NowPlayingServiceTests {
         #expect(events.count(0x70526177) == 2)
         #expect(MusicNowPlayingReader.thumbnail(Data([1, 2, 3])) == nil)
         #expect(MusicNowPlayingReader.thumbnail(Data(count: 10 * 1024 * 1024 + 1)) == nil)
+    }
+
+    @Test
+    func permissionWaitsForTheUserWithoutMetadataTimeoutsOrDuplicatePrompts() async throws {
+        let permission = TestMusicPermission(status: OSStatus(errAEEventWouldRequireUserConsent), waitsForResponse: true)
+        defer { permission.respond(OSStatus(errAEEventNotPermitted)) }
+        let events = TestMusicAppleEvents()
+        let reader = MusicNowPlayingReader(determinePermission: permission.determine, send: events.send)
+        let first = Task { await reader.read(processIdentifier: 123) }
+        defer { first.cancel() }
+        try await eventually { permission.promptCount == 1 }
+        let second = Task { await reader.read(processIdentifier: 123) }
+        defer { second.cancel() }
+        try await Task.sleep(for: .milliseconds(1100))
+        #expect(permission.promptCount == 1)
+        #expect(events.count(0x70506C53) == 0)
+        permission.respond(noErr)
+        #expect(await first.value.track?.title == "First Song")
+        #expect(await second.value.track?.title == "First Song")
+        #expect(permission.promptCount == 1)
+        #expect(MusicNowPlayingReader.metadataSendOptions.rawValue & UInt(kAEDoNotPromptForUserConsent) != 0)
+    }
+
+    @Test(arguments: [OSStatus(errAEEventNotPermitted), OSStatus(errAEEventWouldRequireUserConsent)])
+    func unansweredOrDeniedPermissionDoesNotPromptAgainAfterRefreshOrReset(status: OSStatus) async {
+        let permission = TestMusicPermission(status: OSStatus(errAEEventWouldRequireUserConsent), promptStatus: status)
+        let events = TestMusicAppleEvents()
+        let reader = MusicNowPlayingReader(determinePermission: permission.determine, send: events.send)
+        #expect(await reader.read(processIdentifier: 123) == .unavailable)
+        await reader.reset()
+        #expect(await reader.read(processIdentifier: 123) == .unavailable)
+        #expect(permission.promptCount == 1 && events.count(0x70506C53) == 0)
+        permission.respond(noErr)
+        #expect(await reader.read(processIdentifier: 123).track?.title == "First Song")
+        #expect(permission.promptCount == 1)
+    }
+
+    @Test
+    func cancellingWhilePermissionIsPendingDiscardsApprovalWithoutSendingMetadata() async throws {
+        let permission = TestMusicPermission(status: OSStatus(errAEEventWouldRequireUserConsent), waitsForResponse: true)
+        defer { permission.respond(OSStatus(errAEEventNotPermitted)) }
+        let events = TestMusicAppleEvents()
+        let reader = MusicNowPlayingReader(determinePermission: permission.determine, send: events.send)
+        let pending = Task { await reader.read(processIdentifier: 123) }
+        defer { pending.cancel() }
+        try await eventually { permission.promptCount == 1 }
+        pending.cancel()
+        permission.respond(noErr)
+        #expect(await pending.value == .unavailable)
+        #expect(events.count(0x70506C53) == 0)
     }
 
     @Test
