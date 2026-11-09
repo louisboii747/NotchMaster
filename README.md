@@ -47,6 +47,7 @@ NotchMaster aims to turn the MacBook notch into a useful, expandable hub. Develo
 
 - Compact black notch preview on supported built-in displays, with hover expansion and delayed collapse.
 - Live local clock and date below the camera when expanded, with localized time and date formatting.
+- Read-only song title, artist and optional artwork from the macOS Music app after Automation consent. The provider uses Music's scripting interface; live playback compatibility still needs manual verification. Other players and browser media are unsupported.
 - Read-only battery percentage and charging indicator beside the expanded clock, updated on power-source changes, with a saved Show Battery Status toggle in Features Settings.
 - Native AppKit animation, plus an expansion-speed preference saved in Settings.
 - Reduce Motion support and optional native trackpad haptic requests on hover transitions.
@@ -140,6 +141,10 @@ The local macOS adaptation of [SwiftPieces ElasticButton](https://swiftpieces.co
 The expanded notch includes a subtle battery icon and localized percentage beside the centred clock and date. Settings > Features > Notch Content > Show Battery Status defaults to on and is saved locally. Turning it off immediately removes only the battery indicator; the clock, date, panel size and compact appearance stay the same. It shows a static bolt only while macOS reports charging. Missing battery information or insufficient space omits the indicator while preserving the clock. Battery updates use public IOKit power-source notifications without a polling timer; compact appearance is unchanged.
 
 For battery and live clock behaviour, hover boundaries, animation, accessibility, haptics and manual testing, see **[Prototype testing](docs/PROTOTYPE_TESTING.md)**. For implementation details, see [Architecture](docs/ARCHITECTURE.md) and the [file map](docs/STRUCTURE.md).
+
+Now Playing Phase 1 targets only the macOS Music application (`com.apple.Music`), where its scripting interface exposes track metadata. It does not read system-wide Control Center metadata or use MusicKit/catalog access. When Music is already running, macOS can ask to allow NotchMaster to control Music under Privacy & Security > Automation. The integration only reads state, metadata and artwork; it never starts Music or sends playback commands. Playing and paused tracks remain visible, with a small paused indicator. Stopped playback, denied access and unavailable metadata restore the clock/battery layout with no media placeholder. Missing artwork uses a quiet music-note tile.
+
+Metadata refreshes every five seconds while Music is running and the Mac is awake. Browser players, Spotify, Podcasts and other applications are unsupported. Streams, subscription content and different macOS versions may expose incomplete metadata or artwork and are not claimed as verified. The sandbox stays enabled with scoped Music scripting entitlements and the hardened-runtime Apple Events entitlement. No temporary exception, private framework or new dependency is used. Mac App Store approval and signed-app Automation behaviour remain unverified. See [Now Playing manual checks](docs/PROTOTYPE_TESTING.md#now-playing-music-checks).
 
 | Path | Purpose |
 | :--- | :--- |

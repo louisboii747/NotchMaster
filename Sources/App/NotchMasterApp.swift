@@ -8,7 +8,11 @@ struct NotchMasterApp: App {
     @State private var dependencies: AppDependencies
 
     init() {
-        let dependencies = AppDependencies()
+        let dependencies = if ProcessInfo.processInfo.environment["NOTCHMASTER_TESTING"] == "1" {
+            AppDependencies(nowPlayingProvider: MusicNowPlayingProvider(runningMusic: { nil }))
+        } else {
+            AppDependencies()
+        }
         _dependencies = State(initialValue: dependencies)
         appDelegate.dependencies = dependencies
     }
@@ -39,10 +43,12 @@ final class NotchMasterAppDelegate: NSObject, NSApplicationDelegate {
         guard !hasFinishedLaunching else { return }
         hasFinishedLaunching = true
         dependencies?.notchWindowController.start()
+        dependencies?.nowPlayingService.start()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
         dependencies?.notchWindowController.stop()
+        dependencies?.nowPlayingService.stop()
     }
 
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {

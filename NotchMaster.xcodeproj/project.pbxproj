@@ -32,6 +32,11 @@
 		400000000000000000000017 /* LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = 30000000000000000000001A /* LICENSE.txt */; };
 		400000000000000000000018 /* BatteryInformationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30000000000000000000001B /* BatteryInformationService.swift */; };
 		400000000000000000000019 /* BatteryInformationServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30000000000000000000001C /* BatteryInformationServiceTests.swift */; };
+		40000000000000000000001D /* NowPlayingService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30000000000000000000001D /* NowPlayingService.swift */; };
+		40000000000000000000001E /* MusicNowPlayingProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30000000000000000000001E /* MusicNowPlayingProvider.swift */; };
+		40000000000000000000001F /* NotchNowPlayingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30000000000000000000001F /* NotchNowPlayingView.swift */; };
+		400000000000000000000020 /* NowPlayingServiceTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000020 /* NowPlayingServiceTests.swift */; };
+		400000000000000000000021 /* NowPlayingViewTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 300000000000000000000021 /* NowPlayingViewTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -73,6 +78,12 @@
 		30000000000000000000001A /* LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
 		30000000000000000000001B /* BatteryInformationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryInformationService.swift; sourceTree = "<group>"; };
 		30000000000000000000001C /* BatteryInformationServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BatteryInformationServiceTests.swift; sourceTree = "<group>"; };
+		30000000000000000000001D /* NowPlayingService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingService.swift; sourceTree = "<group>"; };
+		30000000000000000000001E /* MusicNowPlayingProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicNowPlayingProvider.swift; sourceTree = "<group>"; };
+		30000000000000000000001F /* NotchNowPlayingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotchNowPlayingView.swift; sourceTree = "<group>"; };
+		300000000000000000000020 /* NowPlayingServiceTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingServiceTests.swift; sourceTree = "<group>"; };
+		300000000000000000000021 /* NowPlayingViewTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NowPlayingViewTests.swift; sourceTree = "<group>"; };
+		300000000000000000000022 /* NotchMaster.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = NotchMaster.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -146,6 +157,8 @@
 		20000000000000000000000F /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				30000000000000000000001E /* MusicNowPlayingProvider.swift */,
+				30000000000000000000001D /* NowPlayingService.swift */,
 				300000000000000000000016 /* LoginItemService.swift */,
 				30000000000000000000001B /* BatteryInformationService.swift */,
 			);
@@ -175,6 +188,7 @@
 		200000000000000000000008 /* Tests/Core */ = {
 			isa = PBXGroup;
 			children = (
+				300000000000000000000020 /* NowPlayingServiceTests.swift */,
 				300000000000000000000007 /* PreferencesStoreTests.swift */,
 				30000000000000000000000F /* DisplayGeometryTests.swift */,
 				300000000000000000000010 /* NotchWindowControllerTests.swift */,
@@ -206,6 +220,7 @@
 			isa = PBXGroup;
 			children = (
 				300000000000000000000009 /* Shared.xcconfig */,
+				300000000000000000000022 /* NotchMaster.entitlements */,
 			);
 			path = Config;
 			sourceTree = "<group>";
@@ -223,6 +238,7 @@
 		20000000000000000000000D /* Notch */ = {
 			isa = PBXGroup;
 			children = (
+				30000000000000000000001F /* NotchNowPlayingView.swift */,
 				30000000000000000000000E /* NotchView.swift */,
 			);
 			path = Notch;
@@ -231,6 +247,7 @@
 		20000000000000000000000E /* Tests/UI */ = {
 			isa = PBXGroup;
 			children = (
+				300000000000000000000021 /* NowPlayingViewTests.swift */,
 				300000000000000000000013 /* NotchViewTests.swift */,
 				300000000000000000000015 /* NotchMenuTests.swift */,
 				300000000000000000000018 /* GeneralSettingsTests.swift */,
@@ -347,6 +364,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				40000000000000000000001F /* NotchNowPlayingView.swift in Sources */,
+				40000000000000000000001E /* MusicNowPlayingProvider.swift in Sources */,
+				40000000000000000000001D /* NowPlayingService.swift in Sources */,
 				400000000000000000000001 /* NotchMasterApp.swift in Sources */,
 				400000000000000000000002 /* AppDependencies.swift in Sources */,
 				400000000000000000000003 /* PreferencesStore.swift in Sources */,
@@ -368,6 +388,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				400000000000000000000021 /* NowPlayingViewTests.swift in Sources */,
+				400000000000000000000020 /* NowPlayingServiceTests.swift in Sources */,
 				400000000000000000000007 /* PreferencesStoreTests.swift in Sources */,
 				40000000000000000000000C /* DisplayGeometryTests.swift in Sources */,
 				40000000000000000000000D /* NotchWindowControllerTests.swift in Sources */,
@@ -417,6 +439,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Config/NotchMaster.entitlements;
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "NotchMaster reads the current song and artwork from Music to display them in the expanded notch.";
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -434,6 +458,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Config/NotchMaster.entitlements;
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "NotchMaster reads the current song and artwork from Music to display them in the expanded notch.";
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;

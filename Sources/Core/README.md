@@ -8,6 +8,8 @@ Owns application state and logic. `Settings/PreferencesStore.swift` is a main-ac
 
 `Services/BatteryInformationService.swift` owns optional read-only battery percentage and charging information. Its injected provider reads public IOKit power-source descriptions and observes changes with one main-run-loop source, without polling. Invalid or missing internal-battery data clears the reading; teardown removes observation. Battery information is transient and stores no settings.
 
+`Services/NowPlayingService.swift` owns read-only playing, paused and unavailable metadata through an injected provider with explicit start/stop. `Services/MusicNowPlayingProvider.swift` uses public Apple Events and Music scripting access groups, serial background reads, five-second refreshes only while Music runs and the Mac is awake, and 128-pixel artwork thumbnails. It observes workspace lifecycle and clears resources on stop. Only Music is implemented; live Automation and playback compatibility remain manual checks. See [Now Playing architecture](../../docs/ARCHITECTURE.md#now-playing-music-provider).
+
 Further planned responsibilities:
 
 - Plugin registration, stable identities, lifecycle, and enablement state.

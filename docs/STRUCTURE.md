@@ -13,7 +13,8 @@ NotchMaster/
 │   ├── LICENSE.txt
 │   └── Controls/ElasticButton.swift
 ├── Config/
-│   └── Shared.xcconfig
+│   ├── Shared.xcconfig
+│   └── NotchMaster.entitlements
 ├── NotchMaster.xcodeproj/
 │   ├── project.pbxproj
 │   └── xcshareddata/xcschemes/NotchMaster.xcscheme
@@ -32,7 +33,9 @@ NotchMaster/
 │   │   ├── README.md
 │   │   ├── Services/
 │   │   │   ├── LoginItemService.swift
-│   │   │   └── BatteryInformationService.swift
+│   │   │   ├── BatteryInformationService.swift
+│   │   │   ├── NowPlayingService.swift
+│   │   │   └── MusicNowPlayingProvider.swift
 │   │   ├── Settings/PreferencesStore.swift
 │   │   └── Windowing/
 │   │       ├── DisplayGeometry.swift
@@ -41,7 +44,9 @@ NotchMaster/
 │   └── UI/
 │       ├── README.md
 │       ├── NotchMenuView.swift
-│       ├── Notch/NotchView.swift
+│       ├── Notch/
+│       │   ├── NotchView.swift
+│       │   └── NotchNowPlayingView.swift
 │       └── Settings/
 │           ├── SettingsView.swift
 │           ├── GeneralSettingsView.swift
@@ -51,12 +56,14 @@ NotchMaster/
 │   │   ├── PreferencesStoreTests.swift
 │   │   ├── LoginItemServiceTests.swift
 │   │   ├── BatteryInformationServiceTests.swift
+│   │   ├── NowPlayingServiceTests.swift
 │   │   ├── DisplayGeometryTests.swift
 │   │   ├── NotchWindowControllerTests.swift
 │   │   └── NotchHoverTests.swift
 │   └── UI/
 │       ├── GeneralSettingsTests.swift
 │       ├── NotchViewTests.swift
+│       ├── NowPlayingViewTests.swift
 │       └── NotchMenuTests.swift
 └── docs/
     ├── STRUCTURE.md
@@ -101,6 +108,9 @@ The following names describe the wider plan. Only the Swift files shown in the t
 | `Sources/Core/Settings/PreferencesStore.swift` | Validated local preferences and persistence. |
 | `Sources/Core/Services/LoginItemService.swift` | Implemented observable login-item status, registration, unregistration, approval and errors through an injected system adapter. |
 | `Sources/Core/Services/BatteryInformationService.swift` | Implemented read-only internal-battery snapshot, injectable provider and public IOKit change notifications. |
+| `Sources/Core/Services/NowPlayingService.swift` | Implemented observable playing/paused/unavailable metadata and explicit provider lifecycle. |
+| `Sources/Core/Services/MusicNowPlayingProvider.swift` | Implemented scoped Music Apple Events reader, bounded artwork and running-app refresh lifecycle. |
+| `Sources/UI/Notch/NotchNowPlayingView.swift` | Implemented read-only artwork, title, artist and paused presentation. |
 | `Sources/Core/Services/EntitlementService.swift` | Verified Pro access and purchase restoration. |
 | `Sources/Core/Sync/SyncCoordinator.swift` | Opt-in iCloud preference synchronization. |
 | `Sources/UI/Settings/SettingsView.swift` | Sidebar and detail composition. |

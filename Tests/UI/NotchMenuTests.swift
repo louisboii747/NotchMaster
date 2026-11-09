@@ -15,6 +15,7 @@ struct AppLifecycleTests {
             let panel = try #require(controller.window)
             let timer = try #require(controller.hoverTimer)
             #expect(controller.isPreviewVisible && panel.isVisible && !controller.isExpanded)
+            #expect(dependencies.nowPlayingService.isObserving)
             #expect(timer.isValid)
             delegate.applicationDidFinishLaunching(Notification(name: NSApplication.didFinishLaunchingNotification))
             #expect(controller.window === panel && controller.hoverTimer === timer)
@@ -50,6 +51,7 @@ struct AppLifecycleTests {
             delegate.applicationWillTerminate(Notification(name: NSApplication.willTerminateNotification))
             #expect(!controller.isPreviewVisible && !controller.isExpanded)
             #expect(controller.hoverTimer == nil && !timer.isValid)
+            #expect(!dependencies.nowPlayingService.isObserving && dependencies.nowPlayingService.state == .unavailable)
         }
     }
 
@@ -76,7 +78,9 @@ struct AppLifecycleTests {
             cursorPosition: { .zero }
         ) { _ in NSView() }
         defer { controller.stop() }
-        let dependencies = AppDependencies(defaults: defaults, loginItemSystem: system, notchWindowController: controller)
+        let provider = TestNowPlayingProvider()
+        let dependencies = AppDependencies(defaults: defaults, loginItemSystem: system, nowPlayingProvider: provider, notchWindowController: controller)
+        defer { dependencies.nowPlayingService.stop() }
         let delegate = NotchMasterAppDelegate()
         delegate.dependencies = dependencies
         let visibleWindows = NSApp.windows.filter { $0.isVisible && $0.styleMask.contains(.titled) }

@@ -5,9 +5,11 @@ struct NotchView: View {
     let cameraHeight: CGFloat
     let batteryService: BatteryInformationService
     let preferences: PreferencesStore
+    var nowPlayingService: NowPlayingService? = nil
 
     var body: some View {
         let showBatteryStatus = preferences.showBatteryStatus
+        let nowPlayingState = nowPlayingService?.state ?? .unavailable
 
         GeometryReader { geometry in
             let size = geometry.size
@@ -23,7 +25,8 @@ struct NotchView: View {
                         date: context.date,
                         batteryInformation: showBatteryStatus ? batteryService.information : nil,
                         panelSize: size,
-                        cameraHeight: cameraHeight
+                        cameraHeight: cameraHeight,
+                        nowPlayingState: nowPlayingState
                     )
                 }
                 .frame(width: size.width, height: contentHeight)
@@ -88,11 +91,44 @@ struct NotchExpandedContentView: View {
     let batteryInformation: BatteryInformation?
     let panelSize: CGSize
     let cameraHeight: CGFloat
+    var nowPlayingState: NowPlayingState = .unavailable
 
     var body: some View {
+        if nowPlayingState.track != nil {
+            ViewThatFits(in: .horizontal) {
+                mediaContent
+                clockContent
+            }
+        } else {
+            clockContent
+        }
+    }
+
+    private var mediaContent: some View {
+        HStack(spacing: 20) {
+            NotchNowPlayingView(state: nowPlayingState)
+                .frame(minWidth: 164, maxWidth: 220)
+            NotchClockView(date: date)
+                .fixedSize()
+            if let batteryInformation {
+                NotchBatteryView(information: batteryInformation)
+                    .fixedSize()
+            }
+        }
+        .padding(.horizontal, 32)
+        .visualEffect { content, geometry in
+            content.opacity(NotchView.contentOpacity(
+                panelSize: panelSize,
+                contentSize: CGSize(width: geometry.size.width - 64, height: geometry.size.height),
+                cameraHeight: cameraHeight
+            ))
+        }
+    }
+
+    private var clockContent: some View {
         let batterySpacing: CGFloat = 28
 
-        NotchClockView(date: date)
+        return NotchClockView(date: date)
             .fixedSize()
             .visualEffect { content, textGeometry in
                 content.opacity(NotchView.contentOpacity(

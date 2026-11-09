@@ -10,4 +10,6 @@ General uses `@Bindable` for persisted appearance. Launch at Login binds directl
 
 `Notch/NotchView.swift` renders the black notch surface with a localized clock and date below the camera when the hosting view has room. AppKit owns expansion animation. The notch receives the shared preferences and read-only battery service. The battery indicator keeps the clock centred and hides when disabled or when information or space is unavailable. Preference changes update the existing hosting view immediately and leave battery observation running. Settings appearance does not change the black notch surface.
 
+`Notch/NotchNowPlayingView.swift` presents optional rounded artwork, title, artist and a static paused indicator. Expanded media shares a row with the existing clock/date and battery when measured width permits; unavailable media and constrained width use the original clock/battery layout. The app-owned service updates the existing hosting view, without changing window geometry or compact rendering.
+
 Use native controls, semantic typography and platform spacing. Views render state and send intents to Core. Other settings categories, plugin rows, Pro controls and interactive notch content remain future work. See the [settings specification](../../docs/SETTINGS.md).

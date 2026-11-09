@@ -8,6 +8,9 @@
       </BuildActionEntries>
    </BuildAction>
    <TestAction buildConfiguration="Debug" selectedDebuggerIdentifier="Xcode.DebuggerFoundation.Debugger.LLDB" selectedLauncherIdentifier="Xcode.IDEFoundation.Launcher.LLDB" shouldUseLaunchSchemeArgsEnv="YES">
+      <EnvironmentVariables>
+         <EnvironmentVariable key="NOTCHMASTER_TESTING" value="1" isEnabled="YES"/>
+      </EnvironmentVariables>
       <Testables>
          <TestableReference skipped="NO" parallelizable="NO">
             <BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="500000000000000000000002" BuildableName="NotchMasterTests.xctest" BlueprintName="NotchMasterTests" ReferencedContainer="container:NotchMaster.xcodeproj"/>

@@ -10,7 +10,7 @@ The foundation uses one native Xcode application target, Swift 6 language mode w
 
 ## Implemented startup and preference flow
 
-`NotchMasterApp` is the `@main` SwiftUI entry point. It retains `AppDependencies` in `@State` and declares `MenuBarExtra` first, followed by one native `Settings` scene. Launch presents the menu bar utility without opening Settings. The former development window and its restoration adapter have been removed. The composition root creates the shared `PreferencesStore`, `LoginItemService`, `BatteryInformationService` and `NotchWindowController`. Settings receives the preferences, login service and preview controller explicitly. The menu receives that same controller.
+`NotchMasterApp` is the `@main` SwiftUI entry point. It retains `AppDependencies` in `@State` and declares `MenuBarExtra` first, followed by one native `Settings` scene. Launch presents the menu bar utility without opening Settings. The former development window and its restoration adapter have been removed. The composition root creates the shared `PreferencesStore`, `LoginItemService`, `BatteryInformationService`, `NowPlayingService` and `NotchWindowController`. Settings receives the preferences, login service and preview controller explicitly. The menu receives that same controller.
 
 The menu bar extra uses the monochrome `macbook` SF Symbol and native menu style. Expand/Collapse calls the existing controller method; availability follows app lifetime. Labels, expansion availability and status read its confirmed observable state. Open Settings activates the app and invokes SwiftUI's environment `openSettings` action. The native app Settings command and Command-comma open the same window. Quit uses native termination and Command-Q. Closing Settings leaves the app and its Dock icon running through the app delegate's last-window policy.
 
@@ -98,6 +98,33 @@ The provider installs one `IOPSNotificationCreateRunLoopSource` in the main run 
 `NotchExpandedContentView` preserves the existing clock/date layout and minute timeline. Its trailing overlay places `NotchBatteryView` 28 points beside the clock. The title3-sized battery symbol and caption-sized localized percentage have 6 points of vertical separation. Charging uses a static bolt. Otherwise, the symbol rounds its fill to the nearest quarter. The accessibility label includes charging state and the value supplies the localized percentage.
 
 The battery overlay does not participate in the clock's layout. Its own geometry-based fade checks the full symmetric width needed to keep the clock centred and the maximum content height below validated camera clearance, using the existing margins and fade range. Insufficient space hides only the battery indicator; unavailable information omits it. This deliberately prioritizes an unchanged clock over showing a badge in constrained widths or long locales. Compact rendering, panel geometry and presentation, hover, haptics and animation remain owned by the existing paths.
+
+## Now Playing, Music provider
+
+Apple's public [MPNowPlayingInfoCenter](https://developer.apple.com/documentation/mediaplayer/mpnowplayinginfocenter) publishes information about media an application itself plays. It is not a supported reader for another application's Control Center metadata. No documented system-wide reader suitable for the macOS 14 baseline was identified. MusicKit and Apple Music catalog/library APIs do not substitute for that capability. Phase 1 therefore targets only the Music app's exposed scripting model. There is no MediaRemote linkage, undocumented notification, Accessibility scraping, shell script or third-party dependency.
+
+`NowPlayingService` is a main-actor observable Core service with injected `NowPlayingProvider`, explicit idempotent `start()`/`stop()` and immutable Sendable track/state values. It publishes playing, paused or unavailable, suppresses unchanged snapshots and clears state on stop. AppDependencies owns it and injects it into the existing notch hosting factory. The app delegate starts it after launch and stops it at termination; service destruction also stops observation.
+
+`MusicNowPlayingProvider` observes documented NSWorkspace launch, termination, sleep and wake notifications. A cancellable task refreshes every five seconds only while a Music process is present and the system is awake. There is no polling while Music is closed. Sleep/termination immediately clear metadata and cancel refreshes; wake/launch reconciles availability. A generation and cancellation check discards obsolete results, including results returned after Music exits. No overlapping polling requests are scheduled for one observation session.
+
+`MusicNowPlayingReader` is an actor, keeping synchronous Apple Events and ImageIO decoding off the main actor. Foundation's public NSAppleEventDescriptor sends read-only `core/getd` requests to a process identifier, so it cannot launch or relaunch Music. Each event has a one-second timeout and cancellation is checked before each send. An event already in progress can finish after stop; its result is discarded. The actor serializes sends. The codes come from Music's scripting dictionary, inspected at `/System/Applications/Music.app/Contents/Resources/com.apple.Music.sdef` on the development system:
+
+| Scripting term | Code |
+| :--- | :--- |
+| Player state | `pPlS` |
+| Current track | `pTrk` |
+| Persistent ID | `pPIS` |
+| Name / artist | `pnam` / `pArt` |
+| First artwork / raw data | `cArt`, index 1 / `pRaw` |
+| Playing / paused | `kPSP` / `kPSp` |
+
+The reader checks track identity again after fetching metadata to avoid combining different tracks during a change. Missing title, stopped/unsupported state, denied Automation, Apple Event errors or unavailable metadata yield unavailable. Missing artist remains an empty value with a localized UI fallback. Artwork failures do not discard valid text. Only the current track's thumbnail is cached; raw data over 10 MiB is rejected, decoding uses ImageIO thumbnail creation capped at 128 pixels, and only a PNG thumbnail crosses to the main actor. Missing artwork retries after 30 seconds. Track changes, stop, app exit and sleep clear the cache. There is no artwork network request or disk persistence.
+
+`NotchNowPlayingView` uses a 40-point rounded artwork tile or music-note placeholder, a headline title and secondary caption artist, with single-line tail truncation and 12-point artwork spacing. A static pause symbol distinguishes paused tracks. Expanded content uses a horizontal row beside the existing clock/date and battery, with measured fit through ViewThatFits. Constrained widths fall back to the original clock/battery layout. Unavailable media uses that original layout without a reserved slot. The clock/date keep their format and typography. Actual hosting dimensions and the existing camera-clearance fade gate all content. Metadata does not change panel geometry, hover state, animations, haptics or hosting-view identity; compact rendering remains unchanged.
+
+Both build configurations retain App Sandbox and hardened runtime. `Config/NotchMaster.entitlements` requests `com.apple.security.automation.apple-events` and `com.apple.security.scripting-targets` for `com.apple.Music` with `com.apple.Music.playback` (state/current track) and `com.apple.Music.library.read` (track details/artwork). These access groups exist in Music's scripting dictionary; no temporary Apple Events exception is requested. The playback group permits more than reads at entitlement level, but this provider sends only get-data events. `NSAppleEventsUsageDescription` explains the read-only purpose. No `NSAppleMusicUsageDescription`, MusicKit authorization or network entitlement is needed. Apple's [sandbox automation guidance](https://developer.apple.com/library/archive/qa/qa1888/_index.html) explains scoped scripting targets and the remaining App Review requirements; this implementation does not establish Mac App Store approval.
+
+Music is the sole implemented provider, not a claim of system-wide compatibility. Live Music playback, Automation grant/denial/revocation with a signed installed build, stream metadata, subscription artwork and macOS 14 runtime behaviour remain manual verification. The shared test scheme sets `NOTCHMASTER_TESTING=1` so the real app test host sees no running Music process and cannot request Automation. Unit tests inject providers/readers/Apple Event responses and never launch or query a music app.
 
 ## Hover and haptic feedback
 
