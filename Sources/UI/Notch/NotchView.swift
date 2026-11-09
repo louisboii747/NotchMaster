@@ -12,17 +12,10 @@ struct NotchView: View {
         GeometryReader { geometry in
             let size = geometry.size
             let contentHeight = max(0, size.height - cameraHeight)
-            let cornerGrowth = min(18, contentHeight / 4)
 
-            UnevenRoundedRectangle(
-                topLeadingRadius: cornerGrowth,
-                bottomLeadingRadius: 10 + cornerGrowth,
-                bottomTrailingRadius: 10 + cornerGrowth,
-                topTrailingRadius: cornerGrowth,
-                style: .continuous
-            )
-            .fill(.black)
-            .accessibilityHidden(true)
+            NotchSurface(cameraHeight: cameraHeight)
+                .fill(.black)
+                .accessibilityHidden(true)
 
             if contentHeight > 0 {
                 TimelineView(.everyMinute) { context in
@@ -48,6 +41,44 @@ struct NotchView: View {
         let horizontalRoom = panelSize.width - contentSize.width - 48
         let verticalRoom = panelSize.height - cameraHeight - contentSize.height - 28
         return Double(min(1, max(0, min(horizontalRoom, verticalRoom) / 8)))
+    }
+}
+
+struct NotchSurface: Shape {
+    let cameraHeight: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        guard rect.width > 0, rect.height > 0 else { return Path() }
+        let cornerGrowth = min(18, max(0, rect.height - cameraHeight) / 4)
+        let shoulder = min(14, cornerGrowth, rect.width / 4)
+        let body = rect.insetBy(dx: shoulder, dy: 0)
+        var path = UnevenRoundedRectangle(
+            bottomLeadingRadius: 10 + cornerGrowth,
+            bottomTrailingRadius: 10 + cornerGrowth,
+            style: .continuous
+        ).path(in: body)
+
+        // With no expansion, retain the original compact surface exactly.
+        guard shoulder > 0 else { return path }
+
+        // The flared shoulders meet the screen edge and turn inward into the sides.
+        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: body.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: body.minX, y: rect.minY + shoulder))
+        path.addQuadCurve(
+            to: CGPoint(x: rect.minX, y: rect.minY),
+            control: CGPoint(x: body.minX, y: rect.minY)
+        )
+        path.closeSubpath()
+
+        path.move(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.addQuadCurve(
+            to: CGPoint(x: body.maxX, y: rect.minY + shoulder),
+            control: CGPoint(x: body.maxX, y: rect.minY)
+        )
+        path.addLine(to: CGPoint(x: body.maxX, y: rect.minY))
+        path.closeSubpath()
+        return path
     }
 }
 

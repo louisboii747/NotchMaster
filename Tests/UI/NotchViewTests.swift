@@ -74,20 +74,26 @@ struct NotchViewTests {
         }
     }
 
-    @Test
-    func expandedSurfaceRoundsAllCornersAndReachesTheTopAtTheCenter() throws {
+    @Test(arguments: [CGSize(width: 480, height: 152), CGSize(width: 300, height: 112), CGSize(width: 220, height: 80)])
+    func expandedSurfaceJoinsTheTopWithInwardShouldersAndRoundedBottomCorners(size: CGSize) throws {
         let preferences = try makePreferences()
         defer { clearPreferences() }
         let service = BatteryInformationService(provider: TestBatteryInformationProvider())
-        let image = try snapshot(NotchView(cameraHeight: 40, batteryService: service, preferences: preferences), size: expandedSize)
+        let image = try snapshot(NotchView(cameraHeight: 40, batteryService: service, preferences: preferences), size: size)
 
-        for x in [2, image.pixelsWide - 3] {
-            for y in [2, image.pixelsHigh - 3] {
-                let color = try #require(image.colorAt(x: x, y: y))
-                #expect(color.alphaComponent < 0.05)
-            }
+        for x in [8, image.pixelsWide - 9] {
+            #expect(try #require(image.colorAt(x: x, y: 0)).alphaComponent > 0.95)
+            #expect(try #require(image.colorAt(x: x, y: 24)).alphaComponent < 0.05)
+        }
+        for x in [16, image.pixelsWide - 17] {
+            #expect(try #require(image.colorAt(x: x, y: 32)).alphaComponent > 0.95)
+            #expect(try #require(image.colorAt(x: x, y: image.pixelsHigh - 3)).alphaComponent < 0.05)
         }
         #expect(image.colorAt(x: image.pixelsWide / 2, y: 2)?.alphaComponent == 1)
+        Attachment.record(
+            try #require(image.representation(using: .png, properties: [:])),
+            named: "surface-\(Int(size.width))x\(Int(size.height)).png"
+        )
     }
 
     @Test
