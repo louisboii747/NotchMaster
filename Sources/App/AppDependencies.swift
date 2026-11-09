@@ -19,8 +19,12 @@ final class AppDependencies {
         batteryInformationService = BatteryInformationService(provider: batteryInformationProvider)
         self.notchWindowController = notchWindowController ?? NotchWindowController(expansionDuration: { [preferences] in
             preferences.expansionDuration
-        }) { [batteryInformationService] cameraHeight in
-            NSHostingView(rootView: NotchView(cameraHeight: cameraHeight, batteryService: batteryInformationService))
+        }) { [batteryInformationService, preferences] cameraHeight in
+            NSHostingView(rootView: NotchView(
+                cameraHeight: cameraHeight,
+                batteryService: batteryInformationService,
+                preferences: preferences
+            ))
         }
     }
 }

@@ -2,7 +2,7 @@ import SwiftUI
 
 @MainActor
 struct FeaturesSettingsView: View {
-    let preferences: PreferencesStore
+    @Bindable var preferences: PreferencesStore
     let notchWindowController: NotchWindowController
 
     var body: some View {
@@ -13,6 +13,16 @@ struct FeaturesSettingsView: View {
                 Text("Features")
             } footer: {
                 Text(notchWindowController.statusMessage)
+            }
+
+            Section {
+                Toggle("Show Battery Status", isOn: $preferences.showBatteryStatus)
+                    .toggleStyle(.switch)
+                    .accessibilityIdentifier("ShowBatteryStatus")
+            } header: {
+                Text("Notch Content")
+            } footer: {
+                Text("Show battery percentage and charging status in the expanded notch.")
             }
 
             ExpansionSpeedSettings(preferences: preferences)

@@ -4,8 +4,11 @@ import SwiftUI
 struct NotchView: View {
     let cameraHeight: CGFloat
     let batteryService: BatteryInformationService
+    let preferences: PreferencesStore
 
     var body: some View {
+        let showBatteryStatus = preferences.showBatteryStatus
+
         GeometryReader { geometry in
             let size = geometry.size
             let contentHeight = max(0, size.height - cameraHeight)
@@ -25,7 +28,7 @@ struct NotchView: View {
                 TimelineView(.everyMinute) { context in
                     NotchExpandedContentView(
                         date: context.date,
-                        batteryInformation: batteryService.information,
+                        batteryInformation: showBatteryStatus ? batteryService.information : nil,
                         panelSize: size,
                         cameraHeight: cameraHeight
                     )

@@ -47,7 +47,7 @@ NotchMaster aims to turn the MacBook notch into a useful, expandable hub. Develo
 
 - Compact black notch preview on supported built-in displays, with hover expansion and delayed collapse.
 - Live local clock and date below the camera when expanded, with localized time and date formatting.
-- Read-only battery percentage and charging indicator beside the expanded clock, updated on power-source changes.
+- Read-only battery percentage and charging indicator beside the expanded clock, updated on power-source changes, with a saved Show Battery Status toggle in Features Settings.
 - Native AppKit animation, plus an expansion-speed preference saved in Settings.
 - Reduce Motion support and optional native trackpad haptic requests on hover transitions.
 - Native menu bar controls for Expand/Collapse, preview status, Settings and Quit, available with Settings closed.
@@ -127,7 +127,7 @@ swiftformat --lint .
 
 To apply the configured formatting locally, run `swiftformat .` and review the diff before committing. SwiftLint and SwiftFormat use the deliberately small rule sets in `.swiftlint.yml` and `.swiftformat`; extend these rules incrementally as the codebase develops.
 
-The prototype uses local ad hoc signing; distribution signing isn't configured. Launch leaves Settings closed and makes the compact island available immediately on a supported display. Hover over the notch to expand it. Use the monochrome MacBook menu bar icon to expand/collapse, read status, open Settings or quit. Open Settings and Command-comma reuse one window. General contains startup and appearance preferences; Features contains island status and expansion speed. Closing Settings leaves the utility and its Dock icon running. Quit uses Command-Q.
+The prototype uses local ad hoc signing; distribution signing isn't configured. Launch leaves Settings closed and makes the compact island available immediately on a supported display. Hover over the notch to expand it. Use the monochrome MacBook menu bar icon to expand/collapse, read status, open Settings or quit. Open Settings and Command-comma reuse one window. General contains startup and appearance preferences; Features contains island status, Show Battery Status and expansion speed. Closing Settings leaves the utility and its Dock icon running. Quit uses Command-Q.
 
 Settings > General > Appearance offers Automatic, Light and Dark. Automatic defaults to the macOS appearance and follows changes while the window is open. Light and Dark override the entire Settings window. The selection persists across launches. The passive black notch preview retains its existing colours.
 
@@ -137,7 +137,7 @@ General Settings includes a native Launch at Login switch. It is off when macOS 
 
 The local macOS adaptation of [SwiftPieces ElasticButton](https://swiftpieces.com/docs/components/controls/elastic-button) remains available as source under its separate [SwiftPieces licence](SwiftPieces/LICENSE.txt). Settings uses native form controls.
 
-The expanded notch includes a subtle battery icon and localized percentage beside the centred clock and date. It shows a static bolt only while macOS reports charging. Missing battery information or insufficient space omits the indicator while preserving the clock. Battery updates use public IOKit power-source notifications without a polling timer; compact appearance is unchanged.
+The expanded notch includes a subtle battery icon and localized percentage beside the centred clock and date. Settings > Features > Notch Content > Show Battery Status defaults to on and is saved locally. Turning it off immediately removes only the battery indicator; the clock, date, panel size and compact appearance stay the same. It shows a static bolt only while macOS reports charging. Missing battery information or insufficient space omits the indicator while preserving the clock. Battery updates use public IOKit power-source notifications without a polling timer; compact appearance is unchanged.
 
 For battery and live clock behaviour, hover boundaries, animation, accessibility, haptics and manual testing, see **[Prototype testing](docs/PROTOTYPE_TESTING.md)**. For implementation details, see [Architecture](docs/ARCHITECTURE.md) and the [file map](docs/STRUCTURE.md).
 

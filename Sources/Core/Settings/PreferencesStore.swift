@@ -12,6 +12,7 @@ enum AppAppearance: String, CaseIterable {
 final class PreferencesStore {
     static let expansionDurationKey = "notchExpansionDuration"
     static let appearanceKey = "appAppearance"
+    static let showBatteryStatusKey = "showBatteryStatus"
     static let defaultExpansionDuration: TimeInterval = 0.30
     static let expansionDurationRange: ClosedRange<TimeInterval> = 0.15...0.60
 
@@ -21,6 +22,12 @@ final class PreferencesStore {
     var appearance: AppAppearance {
         didSet {
             defaults.set(appearance.rawValue, forKey: Self.appearanceKey)
+        }
+    }
+
+    var showBatteryStatus: Bool {
+        didSet {
+            defaults.set(showBatteryStatus, forKey: Self.showBatteryStatusKey)
         }
     }
 
@@ -45,9 +52,11 @@ final class PreferencesStore {
     init(defaults: UserDefaults) {
         self.defaults = defaults
         appearance = defaults.string(forKey: Self.appearanceKey).flatMap(AppAppearance.init(rawValue:)) ?? .automatic
+        showBatteryStatus = defaults.object(forKey: Self.showBatteryStatusKey) as? Bool ?? true
         let persisted = defaults.object(forKey: Self.expansionDurationKey) as? Double
         storedExpansionDuration = Self.validatedDuration(persisted ?? Self.defaultExpansionDuration)
         defaults.set(appearance.rawValue, forKey: Self.appearanceKey)
+        defaults.set(showBatteryStatus, forKey: Self.showBatteryStatusKey)
         defaults.set(storedExpansionDuration, forKey: Self.expansionDurationKey)
     }
 

@@ -18,6 +18,43 @@ struct PreferencesStoreTests {
             let store = PreferencesStore(defaults: defaults)
             #expect(store.expansionDuration == 0.30)
             #expect(store.appearance == .automatic)
+            #expect(store.showBatteryStatus)
+            #expect(defaults.object(forKey: PreferencesStore.showBatteryStatusKey) as? Bool == true)
+        }
+    }
+
+    @Test(arguments: [false, true])
+    func persistsAndReloadsBatteryVisibility(showBatteryStatus: Bool) throws {
+        try withDefaults { defaults, suiteName in
+            let store = PreferencesStore(defaults: defaults)
+            store.appearance = .dark
+            store.expansionDuration = 0.42
+            store.showBatteryStatus = !showBatteryStatus
+            store.showBatteryStatus = showBatteryStatus
+            #expect(defaults.object(forKey: PreferencesStore.showBatteryStatusKey) as? Bool == showBatteryStatus)
+
+            let reloadedDefaults = try #require(UserDefaults(suiteName: suiteName))
+            let reloaded = PreferencesStore(defaults: reloadedDefaults)
+            #expect(reloaded.showBatteryStatus == showBatteryStatus)
+            #expect(reloaded.appearance == .dark)
+            #expect(reloaded.expansionDuration == 0.42)
+        }
+    }
+
+    @Test(arguments: [false, true])
+    func loadsExistingBatteryVisibility(showBatteryStatus: Bool) throws {
+        try withDefaults { defaults, _ in
+            defaults.set(showBatteryStatus, forKey: PreferencesStore.showBatteryStatusKey)
+            #expect(PreferencesStore(defaults: defaults).showBatteryStatus == showBatteryStatus)
+        }
+    }
+
+    @Test
+    func replacesMalformedBatteryVisibilityWithDefault() throws {
+        try withDefaults { defaults, _ in
+            defaults.set(["invalid"], forKey: PreferencesStore.showBatteryStatusKey)
+            #expect(PreferencesStore(defaults: defaults).showBatteryStatus)
+            #expect(defaults.object(forKey: PreferencesStore.showBatteryStatusKey) as? Bool == true)
         }
     }
 

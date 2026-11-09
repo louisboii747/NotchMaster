@@ -7,6 +7,7 @@ import Testing
 @MainActor
 struct NotchViewTests {
     private let expandedSize = CGSize(width: 480, height: 152)
+    private let preferencesSuiteName = "NotchMasterNotchViewTests.\(UUID().uuidString)"
 
     @Test(arguments: [false, true])
     func batteryFitsBesideClockWithoutMovingIt(isCharging: Bool) throws {
@@ -51,11 +52,11 @@ struct NotchViewTests {
 
     @Test(arguments: [CGFloat(32), CGFloat(40), CGFloat(80)], [false, true])
     func compactRenderingMatchesTheOriginalSurface(cameraHeight: CGFloat, isCharging: Bool) throws {
+        let preferences = try makePreferences()
+        defer { clearPreferences() }
         let size = CGSize(width: 180, height: cameraHeight)
         let provider = TestBatteryInformationProvider(information: BatteryInformation(percentage: 62, isCharging: isCharging))
-        let compact = try snapshot(NotchView(
-            cameraHeight: cameraHeight, batteryService: BatteryInformationService(provider: provider)
-        ), size: size)
+        let service = BatteryInformationService(provider: provider)
         let original = try snapshot(
             UnevenRoundedRectangle(bottomLeadingRadius: 10, bottomTrailingRadius: 10, style: .continuous)
                 .fill(.black)
@@ -63,14 +64,22 @@ struct NotchViewTests {
             size: size
         )
 
-        #expect(compact.tiffRepresentation == original.tiffRepresentation)
-        #expect(brightBounds(in: compact) == nil)
+        for showBatteryStatus in [false, true] {
+            preferences.showBatteryStatus = showBatteryStatus
+            let compact = try snapshot(NotchView(
+                cameraHeight: cameraHeight, batteryService: service, preferences: preferences
+            ), size: size)
+            #expect(compact.tiffRepresentation == original.tiffRepresentation)
+            #expect(brightBounds(in: compact) == nil)
+        }
     }
 
     @Test
     func expandedSurfaceRoundsAllCornersAndReachesTheTopAtTheCenter() throws {
+        let preferences = try makePreferences()
+        defer { clearPreferences() }
         let service = BatteryInformationService(provider: TestBatteryInformationProvider())
-        let image = try snapshot(NotchView(cameraHeight: 40, batteryService: service), size: expandedSize)
+        let image = try snapshot(NotchView(cameraHeight: 40, batteryService: service, preferences: preferences), size: expandedSize)
 
         for x in [2, image.pixelsWide - 3] {
             for y in [2, image.pixelsHigh - 3] {
@@ -115,6 +124,8 @@ struct NotchViewTests {
 
     @Test(arguments: ["en_US", "en_GB", "de_DE", "fr_FR", "ja_JP", "ar_SA"])
     func localizedContentFitsBelowTheCamera(localeIdentifier: String) throws {
+        let preferences = try makePreferences()
+        defer { clearPreferences() }
         let locale = Locale(identifier: localeIdentifier)
         let clock = NotchClockView(date: Date(timeIntervalSince1970: 1_795_651_140))
             .environment(\.locale, locale)
@@ -128,7 +139,11 @@ struct NotchViewTests {
         ) == 1)
 
         let image = try snapshot(
-            NotchView(cameraHeight: 40, batteryService: BatteryInformationService(provider: TestBatteryInformationProvider()))
+            NotchView(
+                cameraHeight: 40,
+                batteryService: BatteryInformationService(provider: TestBatteryInformationProvider()),
+                preferences: preferences
+            )
                 .environment(\.locale, locale),
             size: expandedSize
         )
@@ -142,6 +157,8 @@ struct NotchViewTests {
 
     @Test
     func hostingViewTracksAnimatedPanelResizingAndReversal() async throws {
+        let preferences = try makePreferences()
+        defer { clearPreferences() }
         let display = DisplayFixture(origin: CGPoint(x: -3000, y: -3000)).geometry
         let provider = TestBatteryInformationProvider(information: BatteryInformation(percentage: 62, isCharging: false))
         let batteryService = BatteryInformationService(provider: provider)
@@ -150,7 +167,7 @@ struct NotchViewTests {
             reduceMotion: { false },
             cursorPosition: { .zero }
         ) { cameraHeight in
-            NSHostingView(rootView: NotchView(cameraHeight: cameraHeight, batteryService: batteryService))
+            NSHostingView(rootView: NotchView(cameraHeight: cameraHeight, batteryService: batteryService, preferences: preferences))
         }
         defer { controller.hidePreview() }
         controller.showPreview()
@@ -180,6 +197,8 @@ struct NotchViewTests {
 
     @Test
     func hostingViewObservesBatteryChangesAndClearsUnavailableInformation() async throws {
+        let preferences = try makePreferences()
+        defer { clearPreferences() }
         let provider = TestBatteryInformationProvider()
         let service = BatteryInformationService(provider: provider)
         let controller = NotchWindowController(
@@ -187,7 +206,7 @@ struct NotchViewTests {
             reduceMotion: { true },
             cursorPosition: { .zero }
         ) { cameraHeight in
-            NSHostingView(rootView: NotchView(cameraHeight: cameraHeight, batteryService: service))
+            NSHostingView(rootView: NotchView(cameraHeight: cameraHeight, batteryService: service, preferences: preferences))
         }
         defer { controller.hidePreview() }
         controller.showPreview()
@@ -205,6 +224,67 @@ struct NotchViewTests {
         provider.sendChange()
         #expect(try await displayedTextBounds(in: content) == original)
         #expect(provider.reads == 3 && provider.observationStarts == 1)
+    }
+
+    @Test(arguments: [false, true], [false, true])
+    func settingsBindingImmediatelyUpdatesExistingContent(isCharging: Bool, initiallyAvailable: Bool) async throws {
+        let preferences = try makePreferences()
+        defer { clearPreferences() }
+        let information = BatteryInformation(percentage: 62, isCharging: isCharging)
+        let provider = TestBatteryInformationProvider(information: initiallyAvailable ? information : nil)
+        let service = BatteryInformationService(provider: provider)
+        let controller = NotchWindowController(
+            displays: { [DisplayFixture(origin: CGPoint(x: -3000, y: -3000)).geometry] },
+            reduceMotion: { true },
+            cursorPosition: { .zero }
+        ) { cameraHeight in
+            NSHostingView(rootView: NotchView(cameraHeight: cameraHeight, batteryService: service, preferences: preferences))
+        }
+        defer { controller.hidePreview() }
+        let settings = FeaturesSettingsView(preferences: preferences, notchWindowController: controller)
+        controller.showPreview()
+        controller.toggleExpansion()
+        let panel = try #require(controller.window)
+        let content = try #require(panel.contentView)
+        let expandedFrame = panel.frame
+        let initial = try #require(try await displayedTextBounds(in: content))
+
+        settings.$preferences.showBatteryStatus.wrappedValue = false
+        let clockOnly = try #require(try await displayedTextBounds(in: content))
+        #expect(!preferences.showBatteryStatus)
+        #expect(clockOnly.minX == initial.minX && clockOnly.minY == initial.minY && clockOnly.maxY == initial.maxY)
+        #expect(initiallyAvailable ? clockOnly.maxX < initial.maxX : clockOnly == initial)
+
+        provider.information = BatteryInformation(percentage: 100, isCharging: !isCharging)
+        provider.sendChange()
+        #expect(try await displayedTextBounds(in: content) == clockOnly)
+        #expect(service.information == provider.information)
+
+        settings.$preferences.showBatteryStatus.wrappedValue = true
+        let withBattery = try #require(try await displayedTextBounds(in: content))
+        #expect(withBattery.minX == clockOnly.minX && withBattery.maxX > clockOnly.maxX)
+        #expect(withBattery.minY == clockOnly.minY && withBattery.maxY == clockOnly.maxY)
+
+        provider.information = nil
+        provider.sendChange()
+        #expect(try await displayedTextBounds(in: content) == clockOnly)
+        for showBatteryStatus in [false, true] {
+            settings.$preferences.showBatteryStatus.wrappedValue = showBatteryStatus
+            #expect(try await displayedTextBounds(in: content) == clockOnly)
+        }
+
+        #expect(controller.window === panel && panel.contentView === content)
+        #expect(panel.frame == expandedFrame && controller.isExpanded)
+        #expect(controller.frameAnimation == nil)
+        #expect(provider.reads == 3 && provider.observationStarts == 1 && provider.observationStops == 0)
+    }
+
+    private func makePreferences() throws -> PreferencesStore {
+        PreferencesStore(defaults: try #require(UserDefaults(suiteName: preferencesSuiteName)))
+    }
+
+    private func clearPreferences() {
+        UserDefaults(suiteName: preferencesSuiteName)?.removePersistentDomain(forName: preferencesSuiteName)
     }
 
     private func expandedContent(information: BatteryInformation?, size: CGSize) -> some View {

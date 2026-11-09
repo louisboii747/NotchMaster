@@ -92,7 +92,7 @@ The following names describe the wider plan. Only the Swift files shown in the t
 | :--- | :--- |
 | `Sources/App/NotchMasterApp.swift` | App entry point, menu and unified Settings scenes, automatic island start/stop and last-window lifecycle delegate. |
 | `Sources/App/AppDependencies.swift` | Compose and retain services, with an injectable preview controller for startup tests. |
-| `Sources/UI/Settings/FeaturesSettingsView.swift` | Features page in the unified Settings window, with automatic island guidance, confirmed status and expansion speed. |
+| `Sources/UI/Settings/FeaturesSettingsView.swift` | Features page in the unified Settings window, with automatic island guidance, confirmed status, battery visibility and expansion speed. |
 | `Sources/UI/NotchMenuView.swift` | Native menu bar Expand/Collapse, preview status, Open Settings and Quit commands. |
 | `Sources/Core/Plugins/PluginRegistry.swift` | Plugin identities, lifecycle, and enabled state. |
 | `Sources/Core/Windowing/NotchWindowController.swift` | Implemented passive AppKit panel ownership, presentation, and display/sleep handling. |
