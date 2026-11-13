@@ -6,6 +6,7 @@ import UniformTypeIdentifiers
 protocol MusicNowPlayingReading: Sendable {
     func read(processIdentifier: pid_t) async -> NowPlayingState
     func reset() async
+    func perform(_ command: NowPlayingCommand, processIdentifier: pid_t) async throws
 }
 
 actor MusicNowPlayingReader: MusicNowPlayingReading {
@@ -40,11 +41,16 @@ actor MusicNowPlayingReader: MusicNowPlayingReading {
     }
 
     func read(processIdentifier: pid_t) -> NowPlayingState {
+        readSnapshot(processIdentifier: processIdentifier, canRetry: true)
+    }
+
+    private func readSnapshot(processIdentifier: pid_t, canRetry: Bool) -> NowPlayingState {
         autoreleasepool {
             do {
                 try Task.checkCancellation()
                 let target = NSAppleEventDescriptor(processIdentifier: processIdentifier)
                 var permission = determinePermission(target, false)
+                try Task.checkCancellation()
                 if permission == errAEEventWouldRequireUserConsent, !hasRequestedPermission {
                     hasRequestedPermission = true
                     permission = determinePermission(target, true)
@@ -63,6 +69,9 @@ actor MusicNowPlayingReader: MusicNowPlayingReading {
                 let identifier = try get(property(0x70504953, of: track), from: target).stringValue ?? ""
                 let title = try get(property(0x706E616D, of: track), from: target).stringValue
                 let artist = try? get(property(0x70417274, of: track), from: target).stringValue
+                let duration = try? get(property(0x70447572, of: track), from: target).doubleValue
+                let position = try? get(property(0x70506F73), from: target).doubleValue
+                let timing = NowPlayingTiming(position: position, duration: duration)
                 let key = "\(processIdentifier)|\(identifier)|\(title ?? "")|\(artist ?? "")"
                 if artworkKey != key || (artwork == nil && Date().timeIntervalSince(artworkReadDate ?? .distantPast) >= 30) {
                     artworkKey = key
@@ -74,13 +83,37 @@ actor MusicNowPlayingReader: MusicNowPlayingReading {
                     }
                 }
                 let finalIdentifier = try get(property(0x70504953, of: track), from: target).stringValue ?? ""
+                if identifier != finalIdentifier, canRetry {
+                    return readSnapshot(processIdentifier: processIdentifier, canRetry: false)
+                }
                 guard identifier == finalIdentifier, !Task.isCancelled else { return .unavailable }
-                return .music(playerState: state, title: title, artist: artist, artwork: artwork)
+                return .music(playerState: state, title: title, artist: artist, artwork: artwork, identifier: identifier.isEmpty ? nil : "\(processIdentifier)|\(identifier)", timing: timing)
             } catch {
                 reset()
                 return .unavailable
             }
         }
+    }
+
+    func perform(_ command: NowPlayingCommand, processIdentifier: pid_t) throws {
+        try Task.checkCancellation()
+        let target = NSAppleEventDescriptor(processIdentifier: processIdentifier)
+        let permission = determinePermission(target, false)
+        try Task.checkCancellation()
+        guard permission == noErr else { throw NSError(domain: NSOSStatusErrorDomain, code: Int(permission)) }
+        let code: AEEventID = switch command {
+        case .previous: 0x50726576
+        case .togglePlayback: 0x506C5073
+        case .next: 0x4E657874
+        }
+        let event = NSAppleEventDescriptor(
+            eventClass: 0x686F6F6B, eventID: code, targetDescriptor: target,
+            returnID: AEReturnID(kAutoGenerateReturnID), transactionID: AETransactionID(kAnyTransactionID)
+        )
+        let reply = try send(event)
+        let error = reply.paramDescriptor(forKeyword: UInt32(keyErrorNumber))?.int32Value ?? 0
+        guard error == 0 else { throw NSError(domain: NSOSStatusErrorDomain, code: Int(error)) }
+        try Task.checkCancellation()
     }
 
     nonisolated static func thumbnail(_ data: Data) -> Data? {
@@ -89,7 +122,7 @@ actor MusicNowPlayingReader: MusicNowPlayingReading {
               let image = CGImageSourceCreateThumbnailAtIndex(source, 0, [
                   kCGImageSourceCreateThumbnailFromImageAlways: true,
                   kCGImageSourceCreateThumbnailWithTransform: true,
-                  kCGImageSourceThumbnailMaxPixelSize: 128,
+                  kCGImageSourceThumbnailMaxPixelSize: 256,
                   kCGImageSourceShouldCacheImmediately: true
               ] as CFDictionary) else { return nil }
         let result = NSMutableData()
@@ -182,6 +215,15 @@ final class MusicNowPlayingProvider: NowPlayingProvider {
         reconcile()
     }
 
+    func perform(_ command: NowPlayingCommand) async throws {
+        guard onChange != nil, !isSleeping, let pid = runningMusic() else { throw CancellationError() }
+        let generation = generation
+        try await reader.perform(command, processIdentifier: pid)
+        try Task.checkCancellation()
+        guard self.generation == generation, onChange != nil, !isSleeping, runningMusic() == pid else { throw CancellationError() }
+        reconcile()
+    }
+
     private func reconcile() {
         generation += 1
         task?.cancel()
@@ -198,9 +240,16 @@ final class MusicNowPlayingProvider: NowPlayingProvider {
             while !Task.isCancelled {
                 let state = await reader.read(processIdentifier: pid)
                 guard !Task.isCancelled, self?.publish(state, processIdentifier: pid, generation: generation) == true else { return }
-                do { try await Task.sleep(for: interval) } catch { return }
+                do { try await Task.sleep(for: Self.refreshDelay(for: state, interval: interval)) } catch { return }
             }
         }
+    }
+
+    static func refreshDelay(for state: NowPlayingState, interval: Duration, now: Date = .now) -> Duration {
+        guard state.isPlaying, let timing = state.track?.timing else { return interval }
+        let remaining = timing.duration - timing.elapsed(at: now, isPlaying: true)
+        guard remaining > 0 else { return interval }
+        return min(interval, .seconds(max(1, remaining + 0.15)))
     }
 
     private func publish(_ state: NowPlayingState, processIdentifier: pid_t, generation: Int) -> Bool {

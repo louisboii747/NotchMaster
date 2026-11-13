@@ -91,7 +91,7 @@ struct NotchHoverTests {
         #expect(regions.containsActivation(CGPoint(x: compact.midX, y: display.frame.maxY)))
         #expect(!regions.containsActivation(CGPoint(x: compact.midX, y: display.frame.maxY + 1)))
         #expect(compact.size == CGSize(width: 180, height: 32))
-        #expect(expanded.size == CGSize(width: 480, height: 152))
+        #expect(expanded.size == CGSize(width: 640, height: 328))
     }
 
     @Test
@@ -146,7 +146,7 @@ struct NotchHoverTests {
         #expect(fixture.hapticRequests == 1 && fixture.displayReads == 2)
         #expect(NSApp.keyWindow === keyWindow && NSApp.mainWindow === mainWindow)
         #expect(NSApp.isActive == wasActive)
-        #expect(panel.ignoresMouseEvents && !panel.canBecomeKey && !panel.canBecomeMain)
+        #expect(!panel.ignoresMouseEvents && !panel.canBecomeKey && !panel.canBecomeMain)
     }
 
     @Test
@@ -184,8 +184,8 @@ struct NotchHoverTests {
         for x: CGFloat in [747, 748, 749, 951, 952, 953] {
             fixture.poll(controller, position: CGPoint(x: x, y: 1060), after: 0.2)
         }
-        fixture.poll(controller, position: CGPoint(x: 601, y: 1000))
-        fixture.poll(controller, position: CGPoint(x: 602, y: 1000), after: 0.1)
+        fixture.poll(controller, position: CGPoint(x: 521, y: 1000))
+        fixture.poll(controller, position: CGPoint(x: 522, y: 1000), after: 0.1)
         fixture.poll(controller, after: 1)
 
         #expect(controller.isExpanded)

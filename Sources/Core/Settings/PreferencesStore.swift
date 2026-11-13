@@ -13,10 +13,12 @@ final class PreferencesStore {
     static let expansionDurationKey = "notchExpansionDuration"
     static let appearanceKey = "appAppearance"
     static let showBatteryStatusKey = "showBatteryStatus"
+    static let showNowPlayingKey = "showNowPlaying"
     static let defaultExpansionDuration: TimeInterval = 0.30
     static let expansionDurationRange: ClosedRange<TimeInterval> = 0.15...0.60
 
     private let defaults: UserDefaults
+    private let onShowNowPlayingChange: @MainActor (Bool) -> Void
     private var storedExpansionDuration: TimeInterval
 
     var appearance: AppAppearance {
@@ -28,6 +30,13 @@ final class PreferencesStore {
     var showBatteryStatus: Bool {
         didSet {
             defaults.set(showBatteryStatus, forKey: Self.showBatteryStatusKey)
+        }
+    }
+
+    var showNowPlaying: Bool {
+        didSet {
+            defaults.set(showNowPlaying, forKey: Self.showNowPlayingKey)
+            if showNowPlaying != oldValue { onShowNowPlayingChange(showNowPlaying) }
         }
     }
 
@@ -49,14 +58,17 @@ final class PreferencesStore {
         }
     }
 
-    init(defaults: UserDefaults) {
+    init(defaults: UserDefaults, onShowNowPlayingChange: @escaping @MainActor (Bool) -> Void = { _ in }) {
         self.defaults = defaults
+        self.onShowNowPlayingChange = onShowNowPlayingChange
         appearance = defaults.string(forKey: Self.appearanceKey).flatMap(AppAppearance.init(rawValue:)) ?? .automatic
         showBatteryStatus = defaults.object(forKey: Self.showBatteryStatusKey) as? Bool ?? true
+        showNowPlaying = defaults.object(forKey: Self.showNowPlayingKey) as? Bool ?? true
         let persisted = defaults.object(forKey: Self.expansionDurationKey) as? Double
         storedExpansionDuration = Self.validatedDuration(persisted ?? Self.defaultExpansionDuration)
         defaults.set(appearance.rawValue, forKey: Self.appearanceKey)
         defaults.set(showBatteryStatus, forKey: Self.showBatteryStatusKey)
+        defaults.set(showNowPlaying, forKey: Self.showNowPlayingKey)
         defaults.set(storedExpansionDuration, forKey: Self.expansionDurationKey)
     }
 

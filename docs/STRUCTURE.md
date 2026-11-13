@@ -102,7 +102,7 @@ The following names describe the wider plan. Only the Swift files shown in the t
 | `Sources/UI/Settings/FeaturesSettingsView.swift` | Features page in the unified Settings window, with automatic island guidance, confirmed status, battery visibility and expansion speed. |
 | `Sources/UI/NotchMenuView.swift` | Native menu bar Expand/Collapse, preview status, Open Settings and Quit commands. |
 | `Sources/Core/Plugins/PluginRegistry.swift` | Plugin identities, lifecycle, and enabled state. |
-| `Sources/Core/Windowing/NotchWindowController.swift` | Implemented passive AppKit panel ownership, presentation, and display/sleep handling. |
+| `Sources/Core/Windowing/NotchWindowController.swift` | Implemented non-activating AppKit panel ownership, compact click-through, expanded hit testing, and display/sleep handling. |
 | `Sources/Core/Windowing/NotchHoverInteraction.swift` | Implemented hover boundaries, entry detection, delayed collapse and manual overrides. |
 | `Sources/Core/Windowing/DisplayGeometry.swift` | Implemented built-in display selection and validated compact and expanded preview geometry. |
 | `Sources/Core/Settings/PreferencesStore.swift` | Validated local preferences and persistence. |
@@ -110,7 +110,7 @@ The following names describe the wider plan. Only the Swift files shown in the t
 | `Sources/Core/Services/BatteryInformationService.swift` | Implemented read-only internal-battery snapshot, injectable provider and public IOKit change notifications. |
 | `Sources/Core/Services/NowPlayingService.swift` | Implemented observable playing/paused/unavailable metadata and explicit provider lifecycle. |
 | `Sources/Core/Services/MusicNowPlayingProvider.swift` | Implemented scoped Music Apple Events reader, bounded artwork and running-app refresh lifecycle. |
-| `Sources/UI/Notch/NotchNowPlayingView.swift` | Implemented read-only artwork, title, artist and paused presentation. |
+| `Sources/UI/Notch/NotchNowPlayingView.swift` | Implemented artwork-led media layout, timed progress, native transport controls and identity-based track transitions. |
 | `Sources/Core/Services/EntitlementService.swift` | Verified Pro access and purchase restoration. |
 | `Sources/Core/Sync/SyncCoordinator.swift` | Opt-in iCloud preference synchronization. |
 | `Sources/UI/Settings/SettingsView.swift` | Sidebar and detail composition. |

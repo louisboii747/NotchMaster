@@ -6,10 +6,11 @@ struct NotchView: View {
     let batteryService: BatteryInformationService
     let preferences: PreferencesStore
     var nowPlayingService: NowPlayingService? = nil
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         let showBatteryStatus = preferences.showBatteryStatus
-        let nowPlayingState = nowPlayingService?.state ?? .unavailable
+        let nowPlayingState = preferences.showNowPlaying ? nowPlayingService?.state ?? .unavailable : .unavailable
 
         GeometryReader { geometry in
             let size = geometry.size
@@ -17,6 +18,11 @@ struct NotchView: View {
 
             NotchSurface(cameraHeight: cameraHeight)
                 .fill(.black)
+                .overlay {
+                    NotchSurface(cameraHeight: cameraHeight)
+                        .fill(LinearGradient(colors: [.black, Color(white: 0.035)], startPoint: .top, endPoint: .bottom))
+                        .opacity(min(1, contentHeight / 100))
+                }
                 .accessibilityHidden(true)
 
             if contentHeight > 0 {
@@ -26,7 +32,9 @@ struct NotchView: View {
                         batteryInformation: showBatteryStatus ? batteryService.information : nil,
                         panelSize: size,
                         cameraHeight: cameraHeight,
-                        nowPlayingState: nowPlayingState
+                        nowPlayingState: nowPlayingState,
+                        nowPlayingService: nowPlayingService,
+                        reduceMotion: reduceMotion
                     )
                 }
                 .frame(width: size.width, height: contentHeight)
@@ -92,37 +100,24 @@ struct NotchExpandedContentView: View {
     let panelSize: CGSize
     let cameraHeight: CGFloat
     var nowPlayingState: NowPlayingState = .unavailable
+    var nowPlayingService: NowPlayingService? = nil
+    var reduceMotion = false
 
     var body: some View {
-        if nowPlayingState.track != nil {
-            ViewThatFits(in: .horizontal) {
-                mediaContent
-                clockContent
-            }
+        if nowPlayingState.track != nil,
+           panelSize.width >= NotchNowPlayingView.minimumSize.width,
+           panelSize.height - cameraHeight >= NotchNowPlayingView.minimumSize.height {
+            mediaContent
         } else {
             clockContent
         }
     }
 
     private var mediaContent: some View {
-        HStack(spacing: 20) {
-            NotchNowPlayingView(state: nowPlayingState)
-                .frame(minWidth: 164, maxWidth: 220)
-            NotchClockView(date: date)
-                .fixedSize()
-            if let batteryInformation {
-                NotchBatteryView(information: batteryInformation)
-                    .fixedSize()
-            }
-        }
-        .padding(.horizontal, 32)
-        .visualEffect { content, geometry in
-            content.opacity(NotchView.contentOpacity(
-                panelSize: panelSize,
-                contentSize: CGSize(width: geometry.size.width - 64, height: geometry.size.height),
-                cameraHeight: cameraHeight
-            ))
-        }
+        NotchNowPlayingView(state: nowPlayingState, date: date, batteryInformation: batteryInformation, service: nowPlayingService, reduceMotion: reduceMotion)
+            .frame(width: panelSize.width, height: panelSize.height - cameraHeight)
+            .opacity(NotchView.contentOpacity(panelSize: panelSize, contentSize: CGSize(width: 408, height: 238), cameraHeight: cameraHeight))
+            .allowsHitTesting(panelSize.height - cameraHeight >= NotchNowPlayingView.minimumSize.height)
     }
 
     private var clockContent: some View {
@@ -165,6 +160,7 @@ struct NotchExpandedContentView: View {
 @MainActor
 struct NotchBatteryView: View {
     let information: BatteryInformation
+    var isInline = false
 
     var symbolName: String {
         if information.isCharging { return "battery.100percent.bolt" }
@@ -173,18 +169,30 @@ struct NotchBatteryView: View {
     }
 
     var body: some View {
-        VStack(spacing: 6) {
-            Image(systemName: symbolName)
-                .font(.title3)
-                .accessibilityHidden(true)
-            Text(Double(information.percentage) / 100, format: .percent.precision(.fractionLength(0)))
-                .font(.caption)
-                .monospacedDigit()
+        Group {
+            if isInline {
+                HStack(spacing: 6) {
+                    Image(systemName: symbolName).accessibilityHidden(true)
+                    percentage
+                }
+            } else {
+                VStack(spacing: 6) {
+                    Image(systemName: symbolName)
+                        .font(.title3)
+                        .accessibilityHidden(true)
+                    percentage.font(.caption)
+                }
+            }
         }
         .foregroundStyle(.white.opacity(0.65))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(information.isCharging ? Text("Battery, charging") : Text("Battery, not charging"))
         .accessibilityValue(Text(Double(information.percentage) / 100, format: .percent.precision(.fractionLength(0))))
+    }
+
+    private var percentage: some View {
+        Text(Double(information.percentage) / 100, format: .percent.precision(.fractionLength(0)))
+            .monospacedDigit()
     }
 }
 
@@ -193,9 +201,9 @@ struct NotchClockView: View {
     let date: Date
 
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 6) {
             Text(date, format: .dateTime.hour().minute())
-                .font(.title)
+                .font(.system(size: 38, weight: .medium, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(.white)
             Text(date, format: .dateTime.weekday(.wide).month(.abbreviated).day())

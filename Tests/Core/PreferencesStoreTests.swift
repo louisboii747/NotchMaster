@@ -20,6 +20,42 @@ struct PreferencesStoreTests {
             #expect(store.appearance == .automatic)
             #expect(store.showBatteryStatus)
             #expect(defaults.object(forKey: PreferencesStore.showBatteryStatusKey) as? Bool == true)
+            #expect(store.showNowPlaying)
+            #expect(defaults.object(forKey: PreferencesStore.showNowPlayingKey) as? Bool == true)
+        }
+    }
+
+    @Test(arguments: [false, true])
+    func persistsAndReloadsNowPlayingVisibility(showNowPlaying: Bool) throws {
+        try withDefaults { defaults, suiteName in
+            let store = PreferencesStore(defaults: defaults)
+            store.appearance = .dark
+            store.expansionDuration = 0.42
+            store.showBatteryStatus = false
+            store.showNowPlaying = !showNowPlaying
+            store.showNowPlaying = showNowPlaying
+            #expect(defaults.object(forKey: PreferencesStore.showNowPlayingKey) as? Bool == showNowPlaying)
+
+            let reloaded = PreferencesStore(defaults: try #require(UserDefaults(suiteName: suiteName)))
+            #expect(reloaded.showNowPlaying == showNowPlaying)
+            #expect(reloaded.appearance == .dark && reloaded.expansionDuration == 0.42 && !reloaded.showBatteryStatus)
+        }
+    }
+
+    @Test(arguments: [false, true])
+    func loadsExistingNowPlayingVisibility(showNowPlaying: Bool) throws {
+        try withDefaults { defaults, _ in
+            defaults.set(showNowPlaying, forKey: PreferencesStore.showNowPlayingKey)
+            #expect(PreferencesStore(defaults: defaults).showNowPlaying == showNowPlaying)
+        }
+    }
+
+    @Test
+    func replacesMalformedNowPlayingVisibilityWithDefault() throws {
+        try withDefaults { defaults, _ in
+            defaults.set(["invalid"], forKey: PreferencesStore.showNowPlayingKey)
+            #expect(PreferencesStore(defaults: defaults).showNowPlaying)
+            #expect(defaults.object(forKey: PreferencesStore.showNowPlayingKey) as? Bool == true)
         }
     }
 

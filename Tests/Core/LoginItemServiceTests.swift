@@ -190,7 +190,8 @@ struct LoginItemServiceTests {
         #expect(dependencies.loginItemService.isEnabled)
         #expect(dependencies.preferences.expansionDuration == 0.15)
         #expect(defaults.persistentDomain(forName: suiteName)?.keys.sorted() == [
-            PreferencesStore.appearanceKey, PreferencesStore.expansionDurationKey, PreferencesStore.showBatteryStatusKey
+            PreferencesStore.appearanceKey, PreferencesStore.expansionDurationKey,
+            PreferencesStore.showBatteryStatusKey, PreferencesStore.showNowPlayingKey
         ].sorted())
     }
 }

@@ -1,6 +1,6 @@
 # Native settings specification
 
-Status: one native Settings window combines General and Features. General implements Launch at Login and Automatic/Light/Dark appearance. Features implements island status, battery visibility and expansion speed. Other categories below remain future requirements.
+Status: one native Settings window combines General and Features. General implements Launch at Login and Automatic/Light/Dark appearance. Features implements island status, battery and Now Playing visibility, and expansion speed. Other categories below remain future requirements.
 
 ## Opening Settings
 
@@ -49,6 +49,8 @@ Launch at Login only controls whether macOS launches the app. Every app launch s
 Features explains automatic hover behaviour and displays the existing controller's confirmed status. There is no preview enable switch. Unsupported geometry displays the reason; availability resumes automatically when supported geometry returns. Wake recovery starts compact, with hover ready again.
 
 The Notch Content section contains a native **Show Battery Status** switch, bound to `PreferencesStore.showBatteryStatus`. It defaults to on, persists locally under `showBatteryStatus`, and applies immediately to the existing expanded notch. Off removes only the battery indicator, preserving the clock, date, layout, compact surface and animation behaviour. The battery service continues observing changes while hidden. Missing battery information or insufficient space still omits the indicator when enabled.
+
+The same section contains a native **Show Now Playing** switch bound to `PreferencesStore.showNowPlaying`. It defaults to on and persists locally under `showNowPlaying`. Off immediately restores the normal clock/battery layout, respecting battery visibility, and stops Music metadata observation, polling and new Automation requests. A saved off value is respected before observation starts at launch. On resumes observation only while the app lifecycle is started, without duplicate observers or refresh tasks. Panel and hosting-view identity, geometry, compact appearance and hover state stay unchanged. An OS consent call already in progress cannot be dismissed programmatically; cancelled results are ignored.
 
 The Animation section contains Dynamic Notch Expansion Speed and its current duration. Slow maps to 0.60 seconds and Fast to 0.15 seconds, with a default duration of 0.30 seconds. Give the slider labelled endpoints and an accessible value. Changes persist locally and affect subsequent transitions. Reduce Motion applies the controller's reduced transition behaviour independently of this preference.
 

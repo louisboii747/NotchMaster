@@ -2,6 +2,7 @@ import AppKit
 import CoreGraphics
 
 struct DisplayGeometry: Equatable {
+    static let expandedSize = CGSize(width: 640, height: 328)
     let name: String
     let frame: CGRect
     let safeAreaTop: CGFloat
@@ -83,11 +84,11 @@ struct DisplayGeometry: Equatable {
         var previewFrame = compactFrame
         if isExpanded {
             let sideExtension = min(
-                max(0, (480 - compactFrame.width) / 2),
+                max(0, (Self.expandedSize.width - compactFrame.width) / 2),
                 compactFrame.minX - frame.minX,
                 frame.maxX - compactFrame.maxX
             )
-            let bottomExtension = min(max(0, 152 - compactFrame.height), compactFrame.minY - frame.minY)
+            let bottomExtension = min(max(0, Self.expandedSize.height - compactFrame.height), compactFrame.minY - frame.minY)
             previewFrame = CGRect(
                 x: compactFrame.minX - sideExtension,
                 y: compactFrame.minY - bottomExtension,

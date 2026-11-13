@@ -16,10 +16,13 @@ final class AppDependencies {
         nowPlayingProvider: any NowPlayingProvider = MusicNowPlayingProvider(),
         notchWindowController: NotchWindowController? = nil
     ) {
-        preferences = PreferencesStore(defaults: defaults)
+        nowPlayingService = NowPlayingService(provider: nowPlayingProvider)
+        preferences = PreferencesStore(defaults: defaults) { [nowPlayingService] enabled in
+            nowPlayingService.setEnabled(enabled)
+        }
+        nowPlayingService.setEnabled(preferences.showNowPlaying)
         loginItemService = LoginItemService(system: loginItemSystem)
         batteryInformationService = BatteryInformationService(provider: batteryInformationProvider)
-        nowPlayingService = NowPlayingService(provider: nowPlayingProvider)
         self.notchWindowController = notchWindowController ?? NotchWindowController(expansionDuration: { [preferences] in
             preferences.expansionDuration
         }) { [batteryInformationService, nowPlayingService, preferences] cameraHeight in

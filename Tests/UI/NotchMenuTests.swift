@@ -55,10 +55,58 @@ struct AppLifecycleTests {
         }
     }
 
+    @Test(arguments: [false, true])
+    func nowPlayingPreferenceControlsObservationDuringAppLifetime(showNowPlaying: Bool) throws {
+        let provider = TestNowPlayingProvider()
+        try withStartup(showNowPlaying: showNowPlaying, nowPlayingProvider: provider) { dependencies, delegate in
+            let service = dependencies.nowPlayingService
+            let preferences = dependencies.preferences
+            let panel = try #require(dependencies.notchWindowController.window)
+            let content = panel.contentView
+            let frame = panel.frame
+            #expect(service.isObserving == showNowPlaying)
+            #expect(provider.starts == (showNowPlaying ? 1 : 0) && provider.stops == 0)
+            delegate.applicationDidFinishLaunching(Notification(name: NSApplication.didFinishLaunchingNotification))
+            #expect(provider.starts == (showNowPlaying ? 1 : 0))
+
+            let settings = FeaturesSettingsView(preferences: preferences, notchWindowController: dependencies.notchWindowController)
+            settings.$preferences.showNowPlaying.wrappedValue = true
+            let staleCallback = try #require(provider.onChange)
+            staleCallback(.playing(NowPlayingTrack(title: "Song", artist: "Artist", artwork: nil)))
+            #expect(service.state.track != nil)
+            for _ in 0..<3 {
+                let starts = provider.starts
+                let stops = provider.stops
+                settings.$preferences.showNowPlaying.wrappedValue = false
+                #expect(!service.isObserving && service.state == .unavailable && provider.stops == stops + 1)
+                settings.$preferences.showNowPlaying.wrappedValue = false
+                #expect(provider.stops == stops + 1)
+                settings.$preferences.showNowPlaying.wrappedValue = true
+                settings.$preferences.showNowPlaying.wrappedValue = true
+                #expect(service.isObserving && provider.starts == starts + 1)
+                staleCallback(.playing(NowPlayingTrack(title: "Stale", artist: "Artist", artwork: nil)))
+                #expect(service.state == .unavailable)
+            }
+            #expect(dependencies.notchWindowController.window === panel && panel.contentView === content && panel.frame == frame)
+            #expect(!dependencies.notchWindowController.isExpanded && dependencies.notchWindowController.frameAnimation == nil)
+
+            delegate.applicationWillTerminate(Notification(name: NSApplication.willTerminateNotification))
+            let starts = provider.starts
+            let stops = provider.stops
+            preferences.showNowPlaying = false
+            preferences.showNowPlaying = true
+            delegate.applicationWillTerminate(Notification(name: NSApplication.willTerminateNotification))
+            #expect(!service.isObserving && service.state == .unavailable)
+            #expect(provider.starts == starts && provider.stops == stops)
+        }
+    }
+
     private func withStartup(
         legacyPreviewOnLaunch: Bool? = nil,
         loginEnabled: Bool = false,
         supported: Bool = true,
+        showNowPlaying: Bool? = nil,
+        nowPlayingProvider: TestNowPlayingProvider = TestNowPlayingProvider(),
         body: (AppDependencies, NotchMasterAppDelegate) throws -> Void
     ) throws {
         let suiteName = "NotchMasterStartupTests.\(UUID().uuidString)"
@@ -66,6 +114,9 @@ struct AppLifecycleTests {
         defer { defaults.removePersistentDomain(forName: suiteName) }
         if let legacyPreviewOnLaunch {
             defaults.set(legacyPreviewOnLaunch, forKey: "showNotchPreviewOnLaunch")
+        }
+        if let showNowPlaying {
+            defaults.set(showNowPlaying, forKey: PreferencesStore.showNowPlayingKey)
         }
         let system = TestLoginItemSystem(status: loginEnabled ? .enabled : .notRegistered)
         var displayRequests = 0
@@ -78,8 +129,7 @@ struct AppLifecycleTests {
             cursorPosition: { .zero }
         ) { _ in NSView() }
         defer { controller.stop() }
-        let provider = TestNowPlayingProvider()
-        let dependencies = AppDependencies(defaults: defaults, loginItemSystem: system, nowPlayingProvider: provider, notchWindowController: controller)
+        let dependencies = AppDependencies(defaults: defaults, loginItemSystem: system, nowPlayingProvider: nowPlayingProvider, notchWindowController: controller)
         defer { dependencies.nowPlayingService.stop() }
         let delegate = NotchMasterAppDelegate()
         delegate.dependencies = dependencies

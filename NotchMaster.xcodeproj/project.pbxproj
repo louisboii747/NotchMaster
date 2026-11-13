@@ -440,7 +440,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Config/NotchMaster.entitlements;
-				INFOPLIST_KEY_NSAppleEventsUsageDescription = "NotchMaster reads the current song and artwork from Music to display them in the expanded notch.";
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "NotchMaster displays song details and playback progress from Music and lets you control playback from the expanded notch.";
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -459,7 +459,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Config/NotchMaster.entitlements;
-				INFOPLIST_KEY_NSAppleEventsUsageDescription = "NotchMaster reads the current song and artwork from Music to display them in the expanded notch.";
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "NotchMaster displays song details and playback progress from Music and lets you control playback from the expanded notch.";
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;

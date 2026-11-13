@@ -203,7 +203,7 @@ struct NotchWindowControllerTests {
             #expect(isExpanded ? panel.frame.contains(compactFrame) : panel.frame == compactFrame)
             #expect(panel.styleMask.contains(.nonactivatingPanel))
             #expect(!panel.canBecomeKey && !panel.canBecomeMain)
-            #expect(panel.ignoresMouseEvents)
+            #expect(panel.ignoresMouseEvents == !isExpanded)
             #expect(panel.animationBehavior == .none)
             #expect(NSApp.keyWindow === keyWindow)
             #expect(NSApp.mainWindow === mainWindow)
@@ -634,7 +634,8 @@ struct NotchWindowControllerTests {
             #expect(sawIntermediateFrame)
             #expect(panel.frame == (try DisplayGeometry.previewPlacement(in: [display], isExpanded: isExpanded).get().frame))
             #expect(panel.contentView === content)
-            #expect(panel.ignoresMouseEvents && !panel.canBecomeKey && !panel.canBecomeMain)
+            #expect(panel.ignoresMouseEvents == !isExpanded)
+            #expect(!panel.canBecomeKey && !panel.canBecomeMain)
             #expect(panel.level == .statusBar)
         }
     }

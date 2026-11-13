@@ -115,6 +115,7 @@ final class NotchWindowController: NSWindowController {
         stopHoverTracking()
         cancelFrameAnimation()
         window?.orderOut(nil)
+        window?.ignoresMouseEvents = true
         presentedDisplay = nil
         isPreviewVisible = false
         isExpanded = false
@@ -147,6 +148,7 @@ final class NotchWindowController: NSWindowController {
                 panel.setFrame(placement.frame, display: true, animate: false)
             }
             presentedDisplay = display
+            panel.ignoresMouseEvents = !isExpanded
             panel.orderFrontRegardless()
             isPreviewVisible = true
             self.isExpanded = isExpanded

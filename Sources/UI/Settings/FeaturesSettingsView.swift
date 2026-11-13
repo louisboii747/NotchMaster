@@ -19,10 +19,13 @@ struct FeaturesSettingsView: View {
                 Toggle("Show Battery Status", isOn: $preferences.showBatteryStatus)
                     .toggleStyle(.switch)
                     .accessibilityIdentifier("ShowBatteryStatus")
+                Toggle("Show Now Playing", isOn: $preferences.showNowPlaying)
+                    .toggleStyle(.switch)
+                    .accessibilityIdentifier("ShowNowPlaying")
             } header: {
                 Text("Notch Content")
             } footer: {
-                Text("Show battery percentage and charging status in the expanded notch.")
+                Text("Show battery status and Music track details in the expanded notch. Turning off Now Playing stops Music observation.")
             }
 
             ExpansionSpeedSettings(preferences: preferences)

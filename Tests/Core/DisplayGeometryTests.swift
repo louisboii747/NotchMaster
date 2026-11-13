@@ -80,7 +80,7 @@ struct DisplayGeometryTests {
         let expanded = try DisplayGeometry.previewPlacement(in: displays, isExpanded: true).get()
 
         #expect(expanded.displayName == display.name)
-        #expect(expanded.frame == CGRect(x: origin.x + 610, y: origin.y + 948, width: 480, height: 152))
+        #expect(expanded.frame == CGRect(x: origin.x + 530, y: origin.y + 772, width: 640, height: 328))
         #expect(expanded.frame.midX == compact.frame.midX)
         #expect(expanded.frame.maxY == display.frame.maxY)
         #expect(expanded.frame.minX < compact.frame.minX)
@@ -90,7 +90,7 @@ struct DisplayGeometryTests {
         #expect(display.frame.contains(expanded.frame))
     }
 
-    @Test(arguments: [CGFloat(480), CGFloat(520)])
+    @Test(arguments: [CGFloat(640), CGFloat(680)])
     func expandedPreviewNeverNarrowsPhysicalNotch(notchWidth: CGFloat) throws {
         var display = DisplayFixture()
         let sideWidth = (display.frame.width - notchWidth) / 2
@@ -101,7 +101,7 @@ struct DisplayGeometryTests {
         let expanded = try DisplayGeometry.previewPlacement(in: [display.geometry], isExpanded: true).get()
 
         #expect(expanded.frame.width == notchWidth)
-        #expect(expanded.frame.height == 152)
+        #expect(expanded.frame.height == 328)
         #expect(expanded.frame.midX == compact.frame.midX)
         #expect(expanded.frame.maxY == display.frame.maxY)
         #expect(expanded.frame.contains(compact.frame))
