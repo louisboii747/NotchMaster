@@ -7,7 +7,7 @@ import Testing
 @MainActor
 struct NowPlayingViewTests {
     private let track = NowPlayingTrack(title: "A Long Song Title That Must Truncate Gracefully", artist: "An Artist With A Long Name", artwork: nil)
-    private let size = CGSize(width: 640, height: 328)
+    private let size = CGSize(width: 600, height: 260)
 
     @Test(arguments: [(0.0, "0:00"), (65.0, "1:05"), (3605.0, "1:00:05")])
     func formatsElapsedAndRemainingTime(seconds: Double, expected: String) {
@@ -55,8 +55,8 @@ struct NowPlayingViewTests {
         let baseline = try snapshot(expanded(.unavailable), size: size)
         #expect(image.tiffRepresentation != baseline.tiffRepresentation)
         let bounds = try #require(brightBounds(image))
-        #expect(bounds.minY >= 54 && bounds.maxY <= 314)
-        #expect(bounds.minX >= 24 && bounds.maxX <= 616)
+        #expect(bounds.minY >= 44 && bounds.maxY <= 256)
+        #expect(bounds.minX >= 24 && bounds.maxX <= 576)
         Attachment.record(try #require(image.representation(using: .png, properties: [:])), named: "now-playing-\(paused).png")
     }
 
@@ -67,6 +67,25 @@ struct NowPlayingViewTests {
         for narrow in [CGSize(width: 280, height: 328), CGSize(width: 640, height: 152)] {
             #expect(try snapshot(expanded(.playing(track), size: narrow), size: narrow).tiffRepresentation == snapshot(expanded(.unavailable, size: narrow), size: narrow).tiffRepresentation)
         }
+    }
+
+    @Test(arguments: [CGFloat(32), CGFloat(37.5), CGFloat(40)])
+    func mediaFitsReferenceIslandBelowCamera(cameraHeight: CGFloat) throws {
+        let image = try snapshot(
+            NotchExpandedContentView(
+                date: Date(timeIntervalSince1970: 1_795_651_140),
+                batteryInformation: BatteryInformation(percentage: 62, isCharging: false),
+                panelSize: size, cameraHeight: cameraHeight, nowPlayingState: .paused(track)
+            )
+            .frame(width: size.width, height: size.height - cameraHeight)
+            .padding(.top, cameraHeight)
+            .background(.black), size: size
+        )
+        let bounds = try #require(brightBounds(image))
+        #expect(bounds.minY >= cameraHeight + 4 && bounds.maxY <= size.height - 4)
+        #expect(brightBounds(image, within: CGRect(x: 190, y: 140, width: 220, height: 48)) != nil)
+        #expect(brightBounds(image, within: CGRect(x: 36, y: 230, width: 528, height: 26)) != nil)
+        Attachment.record(try #require(image.representation(using: .png, properties: [:])), named: "reference-island-camera-\(cameraHeight).png")
     }
 
     @Test
@@ -134,7 +153,10 @@ struct NowPlayingViewTests {
             displays: { [DisplayFixture(origin: CGPoint(x: -3000, y: -3000)).geometry] },
             reduceMotion: { true }, cursorPosition: { .zero }
         ) { cameraHeight in
-            NSHostingView(rootView: NotchView(cameraHeight: cameraHeight, batteryService: battery, preferences: preferences, nowPlayingService: service))
+            NSHostingView(rootView: NotchView(
+                cameraHeight: cameraHeight, batteryService: battery, preferences: preferences,
+                nowPlayingService: service, date: Date(timeIntervalSince1970: 1_795_651_140)
+            ))
         }
         service.start()
         controller.start()
@@ -207,8 +229,8 @@ struct NowPlayingViewTests {
         let settled = try await capture(content)
         #expect(settled.tiffRepresentation != first.tiffRepresentation)
         let scale = CGFloat(settled.pixelsWide) / content.bounds.width
-        #expect(brightBounds(settled, within: CGRect(x: 220 * scale, y: 200 * scale, width: 200 * scale, height: 60 * scale)) != nil)
-        #expect(brightBounds(settled, within: CGRect(x: 36 * scale, y: 278 * scale, width: 568 * scale, height: 34 * scale)) != nil)
+        #expect(brightBounds(settled, within: CGRect(x: 200 * scale, y: 134 * scale, width: 200 * scale, height: 60 * scale)) != nil)
+        #expect(brightBounds(settled, within: CGRect(x: 36 * scale, y: 224 * scale, width: 528 * scale, height: 30 * scale)) != nil)
         provider.onChange?(.playing(second))
         provider.onChange?(.playing(latest))
         try await Task.sleep(for: .milliseconds(400))
@@ -220,6 +242,161 @@ struct NowPlayingViewTests {
         controller.toggleExpansion()
         #expect(try await capture(content).tiffRepresentation == compact.tiffRepresentation)
         #expect(provider.starts == 1 && provider.stops == 0)
+    }
+
+    @Test(arguments: NowPlayingCommand.allCases, [false, true])
+    func pendingTransportPreservesHitTargetsAndFooterUntilSuccess(command: NowPlayingCommand, reduceMotion: Bool) async throws {
+        try await withTransport(reduceMotion: reduceMotion, isPlaying: true) { provider, service, panel, content in
+            let initial = try await transportSnapshot(content)
+            let frame = panel.frame
+            let buttons = try NowPlayingCommand.allCases.map { try element("now-playing-\($0)", in: content) }
+            #expect(buttons.map { $0.accessibilityLabel() } == ["Previous track", "Pause", "Next track"])
+            let buttonFrames = buttons.map { $0.accessibilityFrame() }
+            let footerFrames = try footerFrames(in: content)
+            let button = try element("now-playing-\(command)", in: content)
+            #expect(button.isAccessibilityEnabled())
+            #expect(button.accessibilityPerformPress())
+            try await eventually { provider.commands == [command] }
+            #expect(service.isPerformingCommand)
+            try await Task.sleep(for: .milliseconds(150))
+            let pending = try await transportSnapshot(content)
+            #expect(pending.tiffRepresentation != initial.tiffRepresentation)
+            let controls = CGRect(x: 200, y: 134, width: 200, height: 56)
+            #expect(try pixels(pending, within: controls) != pixels(initial, within: controls))
+            #expect(try footerPixels(pending) == footerPixels(initial))
+            #expect(try self.footerFrames(in: content) == footerFrames)
+            #expect(buttons.map { $0.accessibilityFrame() } == buttonFrames)
+            #expect(buttonFrames.map(\.size) == [CGSize(width: 44, height: 48), CGSize(width: 48, height: 48), CGSize(width: 44, height: 48)])
+            for button in buttons {
+                #expect(!button.isAccessibilityEnabled())
+                #expect(button.accessibilityValue() as? String == "Updating Music")
+                _ = button.accessibilityPerformPress()
+            }
+            #expect(try element("now-playing-command-status", in: content).accessibilityLabel()?.contains("Updating Music") == true)
+            service.perform(command)
+            await Task.yield()
+            #expect(provider.commands == [command])
+            provider.finishCommand()
+            try await eventually { !service.isPerformingCommand }
+            try await Task.sleep(for: .milliseconds(150))
+            #expect(service.controlError == nil)
+            #expect(try await transportSnapshot(content).tiffRepresentation == initial.tiffRepresentation)
+            #expect(buttons.allSatisfy { $0.isAccessibilityEnabled() })
+            #expect(panel.frame == frame && panel.contentView === content)
+            #expect(!panel.canBecomeKey && !panel.canBecomeMain)
+            Attachment.record(try #require(pending.representation(using: .png, properties: [:])), named: "transport-pending-\(command)-\(reduceMotion).png")
+        }
+    }
+
+    @Test(arguments: NowPlayingCommand.allCases, [false, true])
+    func failedTransportPreservesFooterAndRecoversOnRetry(command: NowPlayingCommand, reduceMotion: Bool) async throws {
+        try await withTransport(reduceMotion: reduceMotion) { provider, service, panel, content in
+            let initial = try await transportSnapshot(content)
+            let frame = panel.frame
+            let footerFrames = try footerFrames(in: content)
+            let button = try element("now-playing-\(command)", in: content)
+            let buttonFrame = button.accessibilityFrame()
+            provider.rejectsCommands = true
+            #expect(button.accessibilityPerformPress())
+            try await eventually { provider.commands == [command] }
+            provider.finishCommand()
+            try await eventually { !service.isPerformingCommand }
+            try await Task.sleep(for: .milliseconds(150))
+            let failed = try await transportSnapshot(content)
+            let error = try #require(service.controlError)
+            #expect(failed.tiffRepresentation != initial.tiffRepresentation)
+            #expect(try footerPixels(failed) == footerPixels(initial))
+            #expect(try self.footerFrames(in: content) == footerFrames)
+            let status = try element("now-playing-command-status", in: content)
+            #expect(status.accessibilityLabel()?.contains(error) == true)
+            #expect(status.accessibilityFrame().maxY <= button.accessibilityFrame().minY)
+            #expect(button.accessibilityFrame() == buttonFrame && button.isAccessibilityEnabled())
+            provider.rejectsCommands = false
+            #expect(button.accessibilityPerformPress())
+            try await eventually { provider.commands.count == 2 }
+            #expect(service.controlError == nil && service.isPerformingCommand)
+            let retry = try await transportSnapshot(content)
+            #expect(try footerPixels(retry) == footerPixels(initial))
+            #expect(try element("now-playing-command-status", in: content).accessibilityLabel()?.contains("Updating Music") == true)
+            provider.finishCommand()
+            try await eventually { !service.isPerformingCommand }
+            try await Task.sleep(for: .milliseconds(150))
+            #expect(try await transportSnapshot(content).tiffRepresentation == initial.tiffRepresentation)
+            #expect(service.controlError == nil && provider.commands == [command, command])
+            #expect(panel.frame == frame && panel.contentView === content)
+            Attachment.record(try #require(failed.representation(using: .png, properties: [:])), named: "transport-failed-\(command)-\(reduceMotion).png")
+        }
+    }
+
+    private func withTransport(
+        reduceMotion: Bool,
+        isPlaying: Bool = false,
+        body: (TestNowPlayingProvider, NowPlayingService, NSWindow, NSView) async throws -> Void
+    ) async throws {
+        let provider = TestNowPlayingProvider()
+        provider.suspendsCommands = true
+        let service = NowPlayingService(provider: provider)
+        let controller = NotchWindowController(
+            displays: { [DisplayFixture(origin: CGPoint(x: -3000, y: -3000)).geometry] },
+            reduceMotion: { true }, cursorPosition: { .zero }
+        ) { height in
+            NSHostingView(rootView: MediaTransitionTestView(
+                service: service, cameraHeight: height, reduceMotion: reduceMotion,
+                batteryInformation: BatteryInformation(percentage: 62, isCharging: false)
+            ))
+        }
+        service.start()
+        provider.onChange?(isPlaying ? .playing(track) : .paused(track))
+        controller.start()
+        controller.toggleExpansion()
+        defer {
+            provider.finishCommand()
+            service.stop()
+            controller.stop()
+        }
+        let panel = try #require(controller.window)
+        try await body(provider, service, panel, try #require(panel.contentView))
+    }
+
+    private func element(_ identifier: String, in view: NSView) throws -> NativeAccessibilityElement {
+        try #require(accessibilityElements(NativeAccessibilityElement(object: view)).first { $0.accessibilityIdentifier() == identifier }, "Missing \(identifier)")
+    }
+
+    private func accessibilityElements(_ element: NativeAccessibilityElement) -> [NativeAccessibilityElement] {
+        [element] + element.children.flatMap { accessibilityElements($0) }
+    }
+
+    private func footerFrames(in view: NSView) throws -> [CGRect] {
+        try ["now-playing-clock", "now-playing-date", "now-playing-battery"].map {
+            let frame = try element($0, in: view).accessibilityFrame()
+            #expect(frame.width > 0 && frame.height > 0)
+            return frame
+        }
+    }
+
+    private func footerPixels(_ image: NSBitmapImageRep) throws -> Data {
+        let rect = CGRect(x: 24, y: DisplayGeometry.expandedSize.height - 40, width: DisplayGeometry.expandedSize.width - 48, height: 32)
+        return try pixels(image, within: rect)
+    }
+
+    private func pixels(_ image: NSBitmapImageRep, within rect: CGRect) throws -> Data {
+        let scale = CGFloat(image.pixelsWide) / DisplayGeometry.expandedSize.width
+        let crop = try #require(image.cgImage?.cropping(to: CGRect(x: rect.minX * scale, y: rect.minY * scale, width: rect.width * scale, height: rect.height * scale)))
+        #expect(brightBounds(NSBitmapImageRep(cgImage: crop)) != nil)
+        return try #require(NSBitmapImageRep(cgImage: crop).tiffRepresentation)
+    }
+
+    private func transportSnapshot(_ view: NSView) async throws -> NSBitmapImageRep {
+        try await Task.sleep(for: .milliseconds(30))
+        view.layoutSubtreeIfNeeded()
+        let host = try #require(view as? NSHostingView<MediaTransitionTestView>)
+        return try snapshot(host.rootView, size: host.bounds.size)
+    }
+
+    private func eventually(_ condition: () -> Bool) async throws {
+        let deadline = ContinuousClock.now.advanced(by: .seconds(2))
+        while !condition(), ContinuousClock.now < deadline { try await Task.sleep(for: .milliseconds(10)) }
+        #expect(condition())
     }
 
     private func expanded(_ state: NowPlayingState, size: CGSize? = nil, service: NowPlayingService? = nil) -> some View {
@@ -262,17 +439,34 @@ struct NowPlayingViewTests {
 }
 
 @MainActor
+private struct NativeAccessibilityElement {
+    let object: AnyObject
+
+    var children: [Self] {
+        (object.accessibilityChildren?() ?? []).map { Self(object: $0 as AnyObject) }
+    }
+
+    func accessibilityIdentifier() -> String? { object.accessibilityIdentifier?() }
+    func accessibilityLabel() -> String? { object.accessibilityLabel?() }
+    func accessibilityValue() -> Any? { object.accessibilityValue?() }
+    func accessibilityFrame() -> CGRect { object.accessibilityFrame?() ?? .zero }
+    func isAccessibilityEnabled() -> Bool { object.isAccessibilityEnabled?() ?? false }
+    func accessibilityPerformPress() -> Bool { object.accessibilityPerformPress?() ?? false }
+}
+
+@MainActor
 private struct MediaTransitionTestView: View {
     let service: NowPlayingService
     let cameraHeight: CGFloat
     let reduceMotion: Bool
+    var batteryInformation: BatteryInformation? = nil
 
     var body: some View {
         GeometryReader { geometry in
             NotchSurface(cameraHeight: cameraHeight).fill(.black)
             if geometry.size.height > cameraHeight {
                 NotchExpandedContentView(
-                    date: Date(timeIntervalSince1970: 1_795_651_140), batteryInformation: nil,
+                    date: Date(timeIntervalSince1970: 1_795_651_140), batteryInformation: batteryInformation,
                     panelSize: geometry.size, cameraHeight: cameraHeight, nowPlayingState: service.state,
                     nowPlayingService: service, reduceMotion: reduceMotion
                 )

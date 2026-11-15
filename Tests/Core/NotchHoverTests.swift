@@ -91,7 +91,7 @@ struct NotchHoverTests {
         #expect(regions.containsActivation(CGPoint(x: compact.midX, y: display.frame.maxY)))
         #expect(!regions.containsActivation(CGPoint(x: compact.midX, y: display.frame.maxY + 1)))
         #expect(compact.size == CGSize(width: 180, height: 32))
-        #expect(expanded.size == CGSize(width: 640, height: 328))
+        #expect(expanded.size == CGSize(width: 600, height: 260))
     }
 
     @Test
@@ -174,7 +174,7 @@ struct NotchHoverTests {
     }
 
     @Test
-    func activationBoundaryMovementDoesNotCauseFlickerOrRepeatedFeedback() {
+    func activationBoundaryMovementDoesNotCauseFlickerOrRepeatedFeedback() throws {
         let fixture = HoverFixture()
         let controller = fixture.makeController()
         defer { controller.hidePreview() }
@@ -184,8 +184,9 @@ struct NotchHoverTests {
         for x: CGFloat in [747, 748, 749, 951, 952, 953] {
             fixture.poll(controller, position: CGPoint(x: x, y: 1060), after: 0.2)
         }
-        fixture.poll(controller, position: CGPoint(x: 521, y: 1000))
-        fixture.poll(controller, position: CGPoint(x: 522, y: 1000), after: 0.1)
+        let expanded = try DisplayGeometry.previewPlacement(in: fixture.displays, isExpanded: true).get().frame
+        fixture.poll(controller, position: CGPoint(x: expanded.minX - 9, y: 1000))
+        fixture.poll(controller, position: CGPoint(x: expanded.minX - 8, y: 1000), after: 0.1)
         fixture.poll(controller, after: 1)
 
         #expect(controller.isExpanded)

@@ -1,8 +1,9 @@
+import Accessibility
 import SwiftUI
 
 @MainActor
 struct NotchNowPlayingView: View {
-    static let minimumSize = CGSize(width: 480, height: 274)
+    static let minimumSize = CGSize(width: 480, height: 220)
 
     let state: NowPlayingState
     var date: Date = .now
@@ -10,9 +11,11 @@ struct NotchNowPlayingView: View {
     var service: NowPlayingService? = nil
     var reduceMotion = false
 
+    private var isPerformingCommand: Bool { service?.isPerformingCommand == true }
+
     var body: some View {
         if let track = state.track {
-            VStack(spacing: 18) {
+            VStack(spacing: 8) {
                 ZStack {
                     hero(track)
                         .id(track.identity)
@@ -25,14 +28,6 @@ struct NotchNowPlayingView: View {
                 .clipped()
                 .animation(reduceMotion ? nil : .easeInOut(duration: 0.28), value: track.identity)
 
-                if state.isPlaying, track.timing != nil {
-                    TimelineView(.periodic(from: .now, by: 1)) { context in
-                        NowPlayingProgressView(timing: track.timing, isPlaying: true, date: context.date)
-                    }
-                } else {
-                    NowPlayingProgressView(timing: track.timing, isPlaying: false, date: date)
-                }
-
                 HStack(spacing: 28) {
                     transportButton(.previous, symbol: "backward.end.fill", label: "Previous track")
                     transportButton(.togglePlayback, symbol: state.isPlaying ? "pause.fill" : "play.fill", label: state.isPlaying ? "Pause" : "Play", primary: true)
@@ -40,11 +35,17 @@ struct NotchNowPlayingView: View {
                 }
                 .frame(maxWidth: .infinity)
 
-                footer
+                VStack(spacing: 4) {
+                    commandStatus
+                    footer
+                }
             }
             .padding(.horizontal, 36)
-            .padding(.vertical, 16)
+            .padding(.vertical, 4)
             .frame(maxWidth: .infinity)
+            .onChange(of: service?.controlError) { _, error in
+                if let error { AccessibilityNotification.Announcement(error).post() }
+            }
         }
     }
 
@@ -59,19 +60,31 @@ struct NotchNowPlayingView: View {
                 }
                 .shadow(color: .black.opacity(0.3), radius: 8, y: 4)
                 .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text(track.title)
-                    .font(.system(size: 25, weight: .semibold))
+                    .font(.system(size: 21, weight: .semibold))
                     .foregroundStyle(.white)
                 Text(track.artist.isEmpty ? String(localized: "Unknown Artist") : track.artist)
-                    .font(.system(size: 16, weight: .medium))
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(.white.opacity(0.56))
+                progress(track)
             }
             .lineLimit(1)
             .truncationMode(.tail)
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .accessibilityElement(children: .combine)
+        .accessibilityElement(children: .contain)
+    }
+
+    @ViewBuilder
+    private func progress(_ track: NowPlayingTrack) -> some View {
+        if state.isPlaying, track.timing != nil {
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                NowPlayingProgressView(timing: track.timing, isPlaying: true, date: context.date)
+            }
+        } else {
+            NowPlayingProgressView(timing: track.timing, isPlaying: false, date: date)
+        }
     }
 
     private func transportButton(_ command: NowPlayingCommand, symbol: String, label: LocalizedStringKey, primary: Bool = false) -> some View {
@@ -91,26 +104,49 @@ struct NotchNowPlayingView: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(.white.opacity(primary ? 1 : 0.8))
-        .disabled(service == nil || service?.isPerformingCommand == true)
+        .disabled(service == nil || isPerformingCommand)
+        .opacity(isPerformingCommand ? 0.5 : 1)
+        .animation(reduceMotion ? nil : .easeOut(duration: 0.12), value: isPerformingCommand)
         .accessibilityLabel(Text(label))
+        .accessibilityValue(isPerformingCommand ? Text("Updating Music") : Text(""))
+        .accessibilityIdentifier("now-playing-\(command)")
         .help(Text(label))
+    }
+
+    private var commandStatus: some View {
+        ZStack {
+            if let error = service?.controlError {
+                Label(error, systemImage: "exclamationmark.circle.fill")
+                    .foregroundStyle(.orange)
+            } else if isPerformingCommand {
+                Text("Updating Music…")
+                    .foregroundStyle(.white.opacity(0.65))
+            }
+        }
+        .font(.caption)
+        .lineLimit(2)
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: .infinity)
+        .frame(height: 28)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(service?.controlError ?? String(localized: "Updating Music…")))
+        .accessibilityHidden(service?.controlError == nil && !isPerformingCommand)
+        .accessibilityIdentifier("now-playing-command-status")
     }
 
     private var footer: some View {
         HStack(spacing: 10) {
-            if let error = service?.controlError {
-                Text(error)
-                    .foregroundStyle(.orange)
-            } else {
-                Text(date, format: .dateTime.hour().minute())
-                    .fontWeight(.medium)
-                    .monospacedDigit()
-                Text(date, format: .dateTime.weekday(.abbreviated).month(.abbreviated).day())
-                    .foregroundStyle(.white.opacity(0.42))
-                Spacer(minLength: 12)
-                if let batteryInformation {
-                    NotchBatteryView(information: batteryInformation, isInline: true)
-                }
+            Text(date, format: .dateTime.hour().minute())
+                .fontWeight(.medium)
+                .monospacedDigit()
+                .accessibilityIdentifier("now-playing-clock")
+            Text(date, format: .dateTime.weekday(.abbreviated).month(.abbreviated).day())
+                .foregroundStyle(.white.opacity(0.42))
+                .accessibilityIdentifier("now-playing-date")
+            Spacer(minLength: 12)
+            if let batteryInformation {
+                NotchBatteryView(information: batteryInformation, isInline: true)
+                    .accessibilityIdentifier("now-playing-battery")
             }
         }
         .font(.caption)

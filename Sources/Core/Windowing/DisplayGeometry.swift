@@ -2,7 +2,7 @@ import AppKit
 import CoreGraphics
 
 struct DisplayGeometry: Equatable {
-    static let expandedSize = CGSize(width: 640, height: 328)
+    static let expandedSize = CGSize(width: 600, height: 260)
     let name: String
     let frame: CGRect
     let safeAreaTop: CGFloat

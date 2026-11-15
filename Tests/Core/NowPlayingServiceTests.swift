@@ -13,6 +13,8 @@ final class TestNowPlayingProvider: NowPlayingProvider {
     private(set) var commands: [NowPlayingCommand] = []
     var commandDelay: Duration = .zero
     var rejectsCommands = false
+    var suspendsCommands = false
+    private var commandContinuation: CheckedContinuation<Void, Never>?
 
     func startObserving(_ onChange: @escaping @MainActor (NowPlayingState) -> Void) {
         starts += 1
@@ -26,8 +28,17 @@ final class TestNowPlayingProvider: NowPlayingProvider {
 
     func perform(_ command: NowPlayingCommand) async throws {
         commands.append(command)
-        try await Task.sleep(for: commandDelay)
+        if suspendsCommands {
+            await withCheckedContinuation { commandContinuation = $0 }
+        } else {
+            try await Task.sleep(for: commandDelay)
+        }
         if rejectsCommands { throw NSError(domain: NSOSStatusErrorDomain, code: -1743) }
+    }
+
+    func finishCommand() {
+        commandContinuation?.resume()
+        commandContinuation = nil
     }
 }
 

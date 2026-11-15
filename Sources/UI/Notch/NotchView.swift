@@ -6,6 +6,7 @@ struct NotchView: View {
     let batteryService: BatteryInformationService
     let preferences: PreferencesStore
     var nowPlayingService: NowPlayingService? = nil
+    var date: Date? = nil
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
@@ -28,7 +29,7 @@ struct NotchView: View {
             if contentHeight > 0 {
                 TimelineView(.everyMinute) { context in
                     NotchExpandedContentView(
-                        date: context.date,
+                        date: date ?? context.date,
                         batteryInformation: showBatteryStatus ? batteryService.information : nil,
                         panelSize: size,
                         cameraHeight: cameraHeight,
@@ -116,7 +117,7 @@ struct NotchExpandedContentView: View {
     private var mediaContent: some View {
         NotchNowPlayingView(state: nowPlayingState, date: date, batteryInformation: batteryInformation, service: nowPlayingService, reduceMotion: reduceMotion)
             .frame(width: panelSize.width, height: panelSize.height - cameraHeight)
-            .opacity(NotchView.contentOpacity(panelSize: panelSize, contentSize: CGSize(width: 408, height: 238), cameraHeight: cameraHeight))
+            .opacity(NotchView.contentOpacity(panelSize: panelSize, contentSize: CGSize(width: 408, height: 184), cameraHeight: cameraHeight))
             .allowsHitTesting(panelSize.height - cameraHeight >= NotchNowPlayingView.minimumSize.height)
     }
 
